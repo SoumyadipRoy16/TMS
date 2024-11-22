@@ -2,6 +2,7 @@
 
 import { User } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 type UserData = {
   firstName: string
@@ -24,30 +25,34 @@ export default function ProfileOverview() {
   }, [])
 
   if (!userData) {
-    return <div>Loading...</div>
+    return <div className="text-muted-foreground">Loading...</div>
   }
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md">
-      <h2 className="text-xl font-semibold mb-4">Profile Overview</h2>
-      <div className="flex items-center mb-4">
-        <User size={48} className="text-gray-400 mr-4" />
-        <div>
-          <p className="font-medium">
-            {userData.firstName} {userData.lastName}
-          </p>
-          <p className="text-sm text-gray-500">{userData.email}</p>
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-foreground">Profile Overview</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-center mb-4">
+          <User size={48} className="text-primary mr-4" />
+          <div>
+            <p className="font-medium text-foreground">
+              {userData.firstName} {userData.lastName}
+            </p>
+            <p className="text-sm text-muted-foreground">{userData.email}</p>
+          </div>
         </div>
-      </div>
-      <div className="space-y-2">
-        <p>
-          <span className="font-medium">Education:</span> {userData.education}
-        </p>
-        <p>
-          <span className="font-medium">Skills:</span>{' '}
-          {userData.skills.join(', ')}
-        </p>
-      </div>
-    </div>
+        <div className="space-y-2">
+          <p className="text-foreground">
+            <span className="font-medium">Education:</span> {userData.education}
+          </p>
+          <p className="text-foreground">
+            <span className="font-medium">Skills:</span>{' '}
+            {userData.skills.join(', ')}
+          </p>
+        </div>
+      </CardContent>
+    </Card>
   )
 }

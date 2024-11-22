@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 export default function Timer() {
   const [time, setTime] = useState(3600) // 1 hour in seconds
@@ -22,9 +23,13 @@ export default function Timer() {
   }
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow-md mb-6">
-      <h2 className="text-xl font-semibold mb-2">Time Remaining</h2>
-      <p className="text-3xl font-bold text-blue-600">{formatTime(time)}</p>
-    </div>
+    <Card className="mb-6">
+      <CardHeader>
+        <CardTitle>Time Remaining</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-3xl font-bold text-primary">{formatTime(time)}</p>
+      </CardContent>
+    </Card>
   )
 }

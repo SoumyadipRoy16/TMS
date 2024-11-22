@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { CheckCircle, Clock, XCircle } from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 type Stage = {
   name: string
@@ -21,38 +22,42 @@ export default function ApplicationStatus() {
   }, [])
 
   if (stages.length === 0) {
-    return <div>Loading...</div>
+    return <div className="text-muted-foreground">Loading...</div>
   }
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md">
-      <h2 className="text-xl font-semibold mb-4">Application Status</h2>
-      <ul className="space-y-4">
-        {stages.map((stage, index) => (
-          <li key={index} className="flex items-center">
-            {stage.status === 'complete' && (
-              <CheckCircle className="text-green-500 mr-2" />
-            )}
-            {stage.status === 'current' && (
-              <Clock className="text-blue-500 mr-2" />
-            )}
-            {stage.status === 'upcoming' && (
-              <XCircle className="text-gray-300 mr-2" />
-            )}
-            <span
-              className={
-                stage.status === 'current'
-                  ? 'font-medium'
-                  : stage.status === 'upcoming'
-                  ? 'text-gray-500'
-                  : ''
-              }
-            >
-              {stage.name}
-            </span>
-          </li>
-        ))}
-      </ul>
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-foreground">Application Status</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <ul className="space-y-4">
+          {stages.map((stage, index) => (
+            <li key={index} className="flex items-center">
+              {stage.status === 'complete' && (
+                <CheckCircle className="text-green-500 dark:text-green-400 mr-2" />
+              )}
+              {stage.status === 'current' && (
+                <Clock className="text-blue-500 dark:text-blue-400 mr-2" />
+              )}
+              {stage.status === 'upcoming' && (
+                <XCircle className="text-muted-foreground mr-2" />
+              )}
+              <span
+                className={
+                  stage.status === 'current'
+                    ? 'font-medium text-foreground'
+                    : stage.status === 'upcoming'
+                    ? 'text-muted-foreground'
+                    : 'text-foreground'
+                }
+              >
+                {stage.name}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </CardContent>
+    </Card>
   )
 }

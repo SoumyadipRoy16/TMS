@@ -2,9 +2,36 @@
 
 import { useState } from 'react'
 import Editor from '@monaco-editor/react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useTheme } from 'next-themes'
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+
+type Language = 'python' | 'javascript' | 'java' | 'cpp';
+
+const languages: { value: Language; label: string }[] = [
+  { value: 'python', label: 'Python' },
+  { value: 'javascript', label: 'JavaScript' },
+  { value: 'java', label: 'Java' },
+  { value: 'cpp', label: 'C++' },
+];
+
+const defaultCode: Record<Language, string> = {
+  python: '# Write your Python code here',
+  javascript: '// Write your JavaScript code here',
+  java: '// Write your Java code here',
+  cpp: '// Write your C++ code here',
+}
 
 export default function CodeEditor() {
-  const [code, setCode] = useState('// Write your code here')
+  const { theme } = useTheme()
+  const [language, setLanguage] = useState<Language>('python')
+  const [code, setCode] = useState(defaultCode[language])
+
+  const handleLanguageChange = (value: Language) => {
+    setLanguage(value)
+    setCode(defaultCode[value])
+  }
 
   const handleEditorChange = (value: string | undefined) => {
     if (value !== undefined) {
@@ -13,23 +40,40 @@ export default function CodeEditor() {
   }
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow-md">
-      <h2 className="text-xl font-semibold mb-4">Code Editor</h2>
-      <Editor
-        height="400px"
-        defaultLanguage="javascript"
-        defaultValue={code}
-        onChange={handleEditorChange}
-        theme="vs-dark"
-        options={{
-          minimap: { enabled: false },
-          fontSize: 14,
-        }}
-      />
-      <button className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-300">
-        Submit Code
-      </button>
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Code Editor</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="flex justify-between items-center mb-4">
+          <Select onValueChange={(value: Language) => handleLanguageChange(value)} defaultValue={language}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Select Language" />
+            </SelectTrigger>
+            <SelectContent>
+              {languages.map((lang) => (
+                <SelectItem key={lang.value} value={lang.value}>
+                  {lang.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <Editor
+          height="400px"
+          language={language}
+          value={code}
+          onChange={handleEditorChange}
+          theme={theme === 'dark' ? 'vs-dark' : 'light'}
+          options={{
+            minimap: { enabled: false },
+            fontSize: 14,
+          }}
+        />
+        <Button className="mt-4 w-full">
+          Submit Code
+        </Button>
+      </CardContent>
+    </Card>
   )
 }
-

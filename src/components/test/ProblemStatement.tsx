@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 type CodingProblem = {
   title: string
@@ -25,27 +26,31 @@ export default function ProblemStatement() {
   }, [])
 
   if (!problem) {
-    return <div>Loading...</div>
+    return <div className="text-muted-foreground">Loading...</div>
   }
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md mb-6">
-      <h2 className="text-xl font-semibold mb-4">{problem.title}</h2>
-      <div className="prose">
-        <p>{problem.description}</p>
-        <h3>Example:</h3>
-        {problem.examples.map((example, index) => (
-          <div key={index}>
-            <pre>
-              <code>
-                {`Input: ${example.input}
+    <Card className="mb-6">
+      <CardHeader>
+        <CardTitle>{problem.title}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="prose dark:prose-invert">
+          <p>{problem.description}</p>
+          <h3 className="text-lg font-semibold mt-4 mb-2">Example:</h3>
+          {problem.examples.map((example, index) => (
+            <div key={index} className="bg-muted p-4 rounded-md my-2">
+              <pre className="text-sm">
+                <code>
+                  {`Input: ${example.input}
 Output: ${example.output}
 Explanation: ${example.explanation}`}
-              </code>
-            </pre>
-          </div>
-        ))}
-      </div>
-    </div>
+                </code>
+              </pre>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   )
 }

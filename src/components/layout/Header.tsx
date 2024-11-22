@@ -3,29 +3,47 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { Menu, X } from 'lucide-react'
+import { ThemeToggle } from '@/components/theme-toggle'
+import { useAuth } from '@/contexts/AuthContext'
+import { Button } from '../ui/button'
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const { user, logout } = useAuth()
 
   return (
-    <header className="bg-white shadow-md">
+    <header className="bg-background border-b">
       <nav className="container mx-auto px-4 py-4 flex justify-between items-center">
-        <Link href="/" className="text-2xl font-bold text-blue-600">
+        <Link href="/" className="text-2xl font-bold text-primary">
           TMS
         </Link>
-        <div className="hidden md:flex space-x-4">
-          <Link href="/" className="text-gray-700 hover:text-blue-600">
+        <div className="hidden md:flex space-x-4 items-center">
+          <Link href="/" className="text-foreground hover:text-primary">
             Home
           </Link>
-          <Link href="/register" className="text-gray-700 hover:text-blue-600">
-            Register
-          </Link>
-          <Link href="/dashboard" className="text-gray-700 hover:text-blue-600">
-            Dashboard
-          </Link>
-          <Link href="/test" className="text-gray-700 hover:text-blue-600">
-            Take Test
-          </Link>
+          {!user ? (
+            <>
+              <Link href="/register" className="text-foreground hover:text-primary">
+                Register
+              </Link>
+              <Link href="/login" className="text-foreground hover:text-primary">
+                Login
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link href="/dashboard" className="text-foreground hover:text-primary">
+                Dashboard
+              </Link>
+              <Link href="/test" className="text-foreground hover:text-primary">
+                Take Test
+              </Link>
+              <Button variant="ghost" onClick={logout}>
+                Logout
+              </Button>
+            </>
+          )}
+          <ThemeToggle />
         </div>
         <button
           className="md:hidden"
@@ -36,27 +54,34 @@ export default function Header() {
       </nav>
       {isMenuOpen && (
         <div className="md:hidden">
-          <Link href="/" className="block py-2 px-4 text-sm hover:bg-gray-100">
+          <Link href="/" className="block py-2 px-4 text-sm hover:bg-accent">
             Home
           </Link>
-          <Link
-            href="/register"
-            className="block py-2 px-4 text-sm hover:bg-gray-100"
-          >
-            Register
-          </Link>
-          <Link
-            href="/dashboard"
-            className="block py-2 px-4 text-sm hover:bg-gray-100"
-          >
-            Dashboard
-          </Link>
-          <Link
-            href="/test"
-            className="block py-2 px-4 text-sm hover:bg-gray-100"
-          >
-            Take Test
-          </Link>
+          {!user ? (
+            <>
+              <Link href="/register" className="block py-2 px-4 text-sm hover:bg-accent">
+                Register
+              </Link>
+              <Link href="/login" className="block py-2 px-4 text-sm hover:bg-accent">
+                Login
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link href="/dashboard" className="block py-2 px-4 text-sm hover:bg-accent">
+                Dashboard
+              </Link>
+              <Link href="/test" className="block py-2 px-4 text-sm hover:bg-accent">
+                Take Test
+              </Link>
+              <button onClick={logout} className="block w-full text-left py-2 px-4 text-sm hover:bg-accent">
+                Logout
+              </button>
+            </>
+          )}
+          <div className="py-2 px-4">
+            <ThemeToggle />
+          </div>
         </div>
       )}
     </header>

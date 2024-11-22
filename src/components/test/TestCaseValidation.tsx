@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 type TestCase = {
   input: string
@@ -20,25 +21,29 @@ export default function TestCaseValidation() {
   }, [])
 
   if (testCases.length === 0) {
-    return <div>Loading...</div>
+    return <div className="text-muted-foreground">Loading...</div>
   }
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md">
-      <h2 className="text-xl font-semibold mb-4">Test Cases</h2>
-      <div className="space-y-4">
-        {testCases.map((testCase, index) => (
-          <div key={index} className="border-b pb-4 last:border-b-0">
-            <p>
-              <span className="font-medium">Input:</span> {testCase.input}
-            </p>
-            <p>
-              <span className="font-medium">Expected Output:</span>{' '}
-              {testCase.output}
-            </p>
-          </div>
-        ))}
-      </div>
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Test Cases</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {testCases.map((testCase, index) => (
+            <div key={index} className="border-b pb-4 last:border-b-0">
+              <p>
+                <span className="font-medium">Input:</span> {testCase.input}
+              </p>
+              <p>
+                <span className="font-medium">Expected Output:</span>{' '}
+                {testCase.output}
+              </p>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   )
 }
