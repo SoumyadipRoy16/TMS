@@ -1,18 +1,35 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import jwt from 'jsonwebtoken'
+import bcrypt from 'bcryptjs'
+import connectDB from '@/lib/mongodb'
+import User from '@/models/User'
 
 export async function POST(request: Request) {
+  await connectDB()
+
   const { email, password } = await request.json()
 
-  // In a real application, you would validate the email and password against your database
-  // For this example, we'll use a mock user
-  const user = { id: 1, email: 'user@example.com', role: 'user' }
+  try {
+    // Find user by email
+    const user = await User.findOne({ email })
+    if (!user) {
+      return NextResponse.json({ success: false, message: 'Invalid credentials' }, { status: 401 })
+    }
 
-  if (email === user.email && password === 'password') {
-    // Create a JWT token
+    // Check password
+    const isPasswordValid = await bcrypt.compare(password, user.password)
+    if (!isPasswordValid) {
+      return NextResponse.json({ success: false, message: 'Invalid credentials' }, { status: 401 })
+    }
+
+    // Create JWT token
     const token = jwt.sign(
-      { userId: user.id, email: user.email, role: user.role },
+      { 
+        userId: user._id, 
+        email: user.email, 
+        role: user.role 
+      },
       process.env.JWT_SECRET || 'fallback_secret',
       { expiresIn: '1h' }
     )
@@ -26,8 +43,21 @@ export async function POST(request: Request) {
       path: '/',
     })
 
-    return NextResponse.json({ success: true, user: { email: user.email, role: user.role } })
-  }
+    // Determine the dashboard URL based on user role
+    const dashboardUrl = user.role === 'admin' ? '/admin/dashboard' : '/dashboard'
 
-  return NextResponse.json({ success: false, message: 'Invalid credentials' }, { status: 401 })
+    return NextResponse.json({ 
+      success: true, 
+      user: { 
+        email: user.email, 
+        role: user.role,
+        firstName: user.firstName,
+        lastName: user.lastName
+      },
+      dashboardUrl: dashboardUrl
+    })
+  } catch (error) {
+    console.error('Login error:', error)
+    return NextResponse.json({ success: false, message: 'Login failed' }, { status: 500 })
+  }
 }

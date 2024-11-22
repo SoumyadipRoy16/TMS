@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { useRouter } from 'next/navigation'
 import { Input } from "@/components/ui/input"
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { SocialMediaAuth } from "@/components/SocialMediaAuth"
 import { useAuth } from '@/contexts/AuthContext'
+import { Toast } from "@/components/ui/toast"
 
 type LoginFormData = {
   email: string
@@ -22,32 +23,64 @@ export default function Login() {
     formState: { errors },
   } = useForm<LoginFormData>()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [loginError, setLoginError] = useState<string | null>(null)
   const router = useRouter()
   const { login } = useAuth()
 
   const onSubmit = async (data: LoginFormData) => {
     setIsSubmitting(true)
+    setLoginError(null)
     try {
       const response = await fetch('/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       })
+      
+      const responseData = await response.json()
+      
       if (response.ok) {
-        const userData = await response.json()
-        login(userData)
-        router.push('/dashboard')
+        // Console log the role
+        console.log('User Role:', responseData.user.role);
+
+        login({
+          name: `${responseData.user.firstName} ${responseData.user.lastName}`, 
+          role: responseData.user.role
+        })
+        
+        // Redirect based on user role
+        if (responseData.user.role === 'admin') {
+          router.push('/admin/dashboard')
+        } else {
+          router.push('/dashboard')
+        }
       } else {
-        console.error('Login failed')
+        setLoginError(responseData.message || 'Login failed')
       }
     } catch (error) {
+      setLoginError('An unexpected error occurred')
       console.error('Error during login:', error)
     }
     setIsSubmitting(false)
   }
 
+  useEffect(() => {
+    if (loginError) {
+      const timer = setTimeout(() => {
+        setLoginError(null)
+      }, 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [loginError])
+
   return (
     <div className="container mx-auto px-4 py-8">
+      {loginError && (
+        <Toast 
+          message={loginError} 
+          className="absolute top-4 left-1/2 -translate-x-1/2"
+        />
+    )}
       <Card className="max-w-md mx-auto">
         <CardHeader>
           <CardTitle>Login</CardTitle>

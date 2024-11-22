@@ -8,17 +8,9 @@ import { Button } from "@/components/ui/button"
 import { SocialMediaAuth } from "@/components/SocialMediaAuth"
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
+import { UserFormData, RegistrationFormProps } from '@/types/registration'
 
-type UserFormData = {
-  firstName: string
-  lastName: string
-  email: string
-  password: string
-  education: string
-  skills: string
-}
-
-export function UserRegistrationForm() {
+export function UserRegistrationForm({ onSubmit }: RegistrationFormProps<UserFormData>) {
   const { login } = useAuth()
   const router = useRouter()
 
@@ -29,7 +21,7 @@ export function UserRegistrationForm() {
   } = useForm<UserFormData>()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const onSubmit = async (data: UserFormData) => {
+  const defaultOnSubmit = async (data: UserFormData) => {
     setIsSubmitting(true)
     try {
       const response = await fetch('/api/register', {
@@ -50,9 +42,11 @@ export function UserRegistrationForm() {
     setIsSubmitting(false)
   }
 
+  const submitHandler = onSubmit || defaultOnSubmit
+
   return (
     <div className="space-y-6">
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={handleSubmit(submitHandler)} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="firstName">First Name</Label>

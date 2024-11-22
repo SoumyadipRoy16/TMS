@@ -8,16 +8,9 @@ import { Button } from "@/components/ui/button"
 import { SocialMediaAuth } from "@/components/SocialMediaAuth"
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
+import { AdminFormData, RegistrationFormProps } from '@/types/registration'
 
-type AdminFormData = {
-  firstName: string
-  lastName: string
-  email: string
-  password: string
-  adminCode: string
-}
-
-export function AdminRegistrationForm() {
+export function AdminRegistrationForm({ onSubmit }: RegistrationFormProps<AdminFormData>) {
   const { login } = useAuth()
   const router = useRouter()
 
@@ -28,7 +21,7 @@ export function AdminRegistrationForm() {
   } = useForm<AdminFormData>()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const onSubmit = async (data: AdminFormData) => {
+  const defaultOnSubmit = async (data: AdminFormData) => {
     setIsSubmitting(true)
     try {
       const response = await fetch('/api/register', {
@@ -39,7 +32,7 @@ export function AdminRegistrationForm() {
       if (response.ok) {
         const userData = await response.json()
         login(userData)
-        router.push('/dashboard')
+        router.push('/admin/dashboard')
       } else {
         console.error('Registration failed')
       }
@@ -49,9 +42,11 @@ export function AdminRegistrationForm() {
     setIsSubmitting(false)
   }
 
+  const submitHandler = onSubmit || defaultOnSubmit
+
   return (
     <div className="space-y-6">
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={handleSubmit(submitHandler)} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="adminFirstName">First Name</Label>

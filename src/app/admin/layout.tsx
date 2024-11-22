@@ -9,6 +9,11 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         <nav>
           <ul className="space-y-2">
             <li>
+              <Link href="/admin/dashboard" className="block py-2 px-4 hover:bg-gray-700 rounded">
+                Dashboard
+              </Link>
+            </li>
+            <li>
               <Link href="/admin/manage-questions" className="block py-2 px-4 hover:bg-gray-700 rounded">
                 Manage Questions
               </Link>
