@@ -4,17 +4,18 @@ import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function AdminDashboard() {
   const router = useRouter()
+  const { user } = useAuth()
 
   useEffect(() => {
-    // Check if the user is an admin (this is a simple check, you should implement proper authentication)
-    const isAdmin = localStorage.getItem('userRole') === 'admin'
-    if (!isAdmin) {
+    // Check if the user is an admin using AuthContext
+    if (!user || user.role !== 'admin') {
       router.push('/login')
     }
-  }, [router])
+  }, [user, router])
 
   return (
     <div className="container mx-auto px-4 py-8">

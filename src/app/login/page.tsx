@@ -40,7 +40,6 @@ export default function Login() {
       const responseData = await response.json()
       
       if (response.ok) {
-        // Console log the role
         console.log('User Role:', responseData.user.role);
 
         login({
@@ -48,11 +47,14 @@ export default function Login() {
           role: responseData.user.role
         })
         
-        // Redirect based on user role
+        // Specific routing based on user role
         if (responseData.user.role === 'admin') {
           router.push('/admin/dashboard')
-        } else {
+        } else if (responseData.user.role === 'user') {
           router.push('/dashboard')
+        } else {
+          // Fallback routing if role is unexpected
+          router.push('/')
         }
       } else {
         setLoginError(responseData.message || 'Login failed')
