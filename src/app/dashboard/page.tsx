@@ -10,12 +10,12 @@ export default function Dashboard() {
   const { user } = useAuth()
 
   if (!user) {
-    return <div>Please log in to view the dashboard.</div>
+    return <div className="text-center text-foreground">Please log in to view the dashboard.</div>
   }
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">Welcome, {user.name}!</h1>
+      <h1 className="text-3xl font-bold mb-6 text-foreground">Welcome, {user.name}!</h1>
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         <ProfileOverview />
         <TestPerformance />
