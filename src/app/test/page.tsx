@@ -6,7 +6,7 @@ import Timer from '@/components/test/Timer'
 export default function Test() {
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">Coding Test</h1>
+      <h1 className="text-3xl font-bold mb-6 text-foreground">Coding Test</h1>
       <div className="grid lg:grid-cols-2 gap-6">
         <div>
           <ProblemStatement />
