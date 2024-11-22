@@ -1,5 +1,5 @@
+import './globals.css'
 import { Inter } from 'next/font/google'
-import '../styles/globals.css'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
 
@@ -17,9 +17,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={`${inter.className} min-h-screen bg-gray-100`}>
         <Header />
-        <main className="min-h-screen">{children}</main>
+        <main className="container mx-auto px-4 py-8">{children}</main>
         <Footer />
       </body>
     </html>
