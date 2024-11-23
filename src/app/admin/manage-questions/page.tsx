@@ -1,55 +1,163 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useForm } from 'react-hook-form'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Toast } from "@/components/ui/toast"
 
 type Question = {
-  id: number
+  id: string
   title: string
   description: string
-  difficulty: string
+  difficulty: 'Easy' | 'Medium' | 'Hard'
+}
+
+type QuestionFormData = Omit<Question, 'id'>
+
+type ToastState = {
+  visible: boolean
+  message: string
+  variant: 'default' | 'destructive'
 }
 
 export default function ManageQuestions() {
-  const [questions, setQuestions] = useState<Question[]>([
-    { id: 1, title: 'Two Sum', description: 'Find two numbers that add up to a target', difficulty: 'Easy' },
-    { id: 2, title: 'Reverse Linked List', description: 'Reverse a singly linked list', difficulty: 'Medium' },
-  ])
-  const [newQuestion, setNewQuestion] = useState({ title: '', description: '', difficulty: '' })
+  const [questions, setQuestions] = useState<Question[]>([])
+  const { register, handleSubmit, reset, setValue } = useForm<QuestionFormData>()
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [toast, setToast] = useState<ToastState>({
+    visible: false,
+    message: '',
+    variant: 'default'
+  })
 
-  const addQuestion = () => {
-    setQuestions([...questions, { id: Date.now(), ...newQuestion }])
-    setNewQuestion({ title: '', description: '', difficulty: '' })
+  useEffect(() => {
+    fetchQuestions()
+  }, [])
+
+  // Hide toast after 3 seconds
+  useEffect(() => {
+    if (toast.visible) {
+      const timer = setTimeout(() => {
+        setToast(prev => ({ ...prev, visible: false }))
+      }, 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [toast.visible])
+
+  const showToast = (message: string, variant: 'default' | 'destructive') => {
+    setToast({
+      visible: true,
+      message,
+      variant
+    })
   }
 
-  const deleteQuestion = (id: number) => {
-    setQuestions(questions.filter(q => q.id !== id))
+  const fetchQuestions = async () => {
+    try {
+      const response = await fetch('/api/admin/questions')
+      if (response.ok) {
+        const data = await response.json()
+        setQuestions(data)
+      } else {
+        showToast('Failed to fetch questions', 'destructive')
+      }
+    } catch (error) {
+      console.error('Error fetching questions:', error)
+      showToast('An unexpected error occurred while fetching questions', 'destructive')
+    }
+  }
+
+  const onSubmit = async (data: QuestionFormData) => {
+    setIsSubmitting(true)
+    try {
+      const response = await fetch('/api/admin/questions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      })
+
+      if (response.ok) {
+        showToast('Question added successfully', 'default')
+        reset()
+        fetchQuestions()
+      } else {
+        showToast('Failed to add question', 'destructive')
+      }
+    } catch (error) {
+      console.error('Error adding question:', error)
+      showToast('An unexpected error occurred while adding the question', 'destructive')
+    }
+    setIsSubmitting(false)
+  }
+
+  const deleteQuestion = async (id: string) => {
+    try {
+      const response = await fetch(`/api/admin/questions?id=${id}`, {
+        method: 'DELETE',
+      })
+
+      if (response.ok) {
+        showToast('Question deleted successfully', 'default')
+        fetchQuestions()
+      } else {
+        showToast('Failed to delete question', 'destructive')
+      }
+    } catch (error) {
+      console.error('Error deleting question:', error)
+      showToast('An unexpected error occurred while deleting the question', 'destructive')
+    }
   }
 
   return (
-    <div>
+    <div className="container mx-auto px-4 py-8">
+      {toast.visible && (
+        <Toast
+          message={toast.message}
+          variant={toast.variant}
+          state="visible"
+        />
+      )}
       <h1 className="text-3xl font-bold mb-6">Manage Questions</h1>
-      <div className="mb-8 space-y-4">
-        <Input
-          placeholder="Question Title"
-          value={newQuestion.title}
-          onChange={(e) => setNewQuestion({ ...newQuestion, title: e.target.value })}
-        />
-        <Textarea
-          placeholder="Question Description"
-          value={newQuestion.description}
-          onChange={(e) => setNewQuestion({ ...newQuestion, description: e.target.value })}
-        />
-        <Input
-          placeholder="Difficulty"
-          value={newQuestion.difficulty}
-          onChange={(e) => setNewQuestion({ ...newQuestion, difficulty: e.target.value })}
-        />
-        <Button onClick={addQuestion}>Add Question</Button>
-      </div>
+      <form onSubmit={handleSubmit(onSubmit)} className="mb-8 space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="title">Question Title</Label>
+          <Input
+            id="title"
+            {...register('title', { required: 'Title is required' })}
+            placeholder="Enter question title"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="description">Question Description</Label>
+          <Textarea
+            id="description"
+            {...register('description', { required: 'Description is required' })}
+            placeholder="Enter question description"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="difficulty">Difficulty</Label>
+          <Select onValueChange={(value) => setValue('difficulty', value as 'Easy' | 'Medium' | 'Hard')}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select difficulty" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Easy">Easy</SelectItem>
+              <SelectItem value="Medium">Medium</SelectItem>
+              <SelectItem value="Hard">Hard</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? 'Adding...' : 'Add Question'}
+        </Button>
+      </form>
       <div className="space-y-4">
         {questions.map((question) => (
           <div key={question.id} className="border p-4 rounded-md">
