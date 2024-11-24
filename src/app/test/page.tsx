@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import CodeEditor from '@/components/test/CodeEditor'
 import ProblemStatement from '@/components/test/ProblemStatement'
 import TestCaseValidation from '@/components/test/TestCaseValidation'
@@ -24,6 +25,7 @@ type Question = {
 }
 
 function TestContent() {
+  const router = useRouter()
   const [question, setQuestion] = useState<Question | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isComplete, setIsComplete] = useState(false)
@@ -61,13 +63,27 @@ function TestContent() {
     setQuestion(newQuestion)
   }
 
+  const handleTestComplete = (shouldReattempt: boolean) => {
+    if (shouldReattempt) {
+      // Reset the test and start from the beginning
+      fetchQuestion()
+      showToast("Starting your final attempt", "default")
+    } else {
+      setIsComplete(true)
+      // Redirect to dashboard after 5 seconds
+      setTimeout(() => {
+        router.push('/dashboard')
+      }, 5000)
+    }
+  }
+
   if (isComplete) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-2xl mx-auto text-center">
-          <h1 className="text-3xl font-bold mb-4">Test Complete!</h1>
-          <p className="text-muted-foreground mb-8">
-            You have completed all available questions.
+      <div className="fixed inset-0 flex items-center justify-center bg-background/95">
+        <div className="max-w-2xl mx-auto text-center px-4">
+          <h1 className="text-3xl font-bold mb-4">Test Completed</h1>
+          <p className="text-muted-foreground text-lg">
+            Please wait for us to review your code(s). Till then head back to your dashboard...
           </p>
         </div>
       </div>
@@ -98,6 +114,7 @@ function TestContent() {
           <CodeEditor
             currentQuestionId={question?.id ?? ''}
             onQuestionChange={handleQuestionChange}
+            onTestComplete={handleTestComplete}
           />
         </div>
       </div>

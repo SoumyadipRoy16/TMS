@@ -7,12 +7,14 @@ import { useTheme } from 'next-themes'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 
 type Language = 'python' | 'javascript' | 'java' | 'cpp';
 
 type Props = {
   currentQuestionId: string;
   onQuestionChange: (question: any) => void;
+  onTestComplete: (shouldReattempt: boolean) => void;
 }
 
 const languages: { value: Language; label: string }[] = [
@@ -29,12 +31,13 @@ const defaultCode: Record<Language, string> = {
   cpp: '// Write your C++ code here',
 }
 
-export default function CodeEditor({ currentQuestionId, onQuestionChange }: Props) {
+export default function CodeEditor({ currentQuestionId, onQuestionChange, onTestComplete }: Props) {
   const { theme } = useTheme()
   const { showToast } = useToast()
   const [language, setLanguage] = useState<Language>('python')
   const [code, setCode] = useState(defaultCode[language])
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showCompletionDialog, setShowCompletionDialog] = useState(false)
 
   const handleLanguageChange = (value: Language) => {
     setLanguage(value)
@@ -71,7 +74,7 @@ export default function CodeEditor({ currentQuestionId, onQuestionChange }: Prop
       showToast("Code submitted successfully", "default")
 
       if (data.isComplete) {
-        showToast("You have completed all questions!", "default")
+        setShowCompletionDialog(true)
       } else if (data.nextQuestion) {
         // Reset editor for next question
         setCode(defaultCode[language])
@@ -85,44 +88,65 @@ export default function CodeEditor({ currentQuestionId, onQuestionChange }: Prop
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Code Editor</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="flex justify-between items-center mb-4">
-          <Select onValueChange={(value: Language) => handleLanguageChange(value)} defaultValue={language}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Select Language" />
-            </SelectTrigger>
-            <SelectContent>
-              {languages.map((lang) => (
-                <SelectItem key={lang.value} value={lang.value}>
-                  {lang.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <Editor
-          height="400px"
-          language={language}
-          value={code}
-          onChange={handleEditorChange}
-          theme={theme === 'dark' ? 'vs-dark' : 'light'}
-          options={{
-            minimap: { enabled: false },
-            fontSize: 14,
-          }}
-        />
-        <Button 
-          className="mt-4 w-full"
-          onClick={handleSubmit}
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? 'Submitting...' : 'Submit Code'}
-        </Button>
-      </CardContent>
-    </Card>
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>Code Editor</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex justify-between items-center mb-4">
+            <Select onValueChange={(value: Language) => handleLanguageChange(value)} defaultValue={language}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select Language" />
+              </SelectTrigger>
+              <SelectContent>
+                {languages.map((lang) => (
+                  <SelectItem key={lang.value} value={lang.value}>
+                    {lang.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <Editor
+            height="400px"
+            language={language}
+            value={code}
+            onChange={handleEditorChange}
+            theme={theme === 'dark' ? 'vs-dark' : 'light'}
+            options={{
+              minimap: { enabled: false },
+              fontSize: 14,
+            }}
+          />
+          <Button 
+            className="mt-4 w-full"
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Submitting...' : 'Submit Code'}
+          </Button>
+        </CardContent>
+      </Card>
+
+      <AlertDialog open={showCompletionDialog} onOpenChange={setShowCompletionDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Test Complete!</AlertDialogTitle>
+            <AlertDialogDescription>
+              You still have one reattempt available. Would you like to try again?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => onTestComplete(false)}>
+              No, submit my answers
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={() => onTestComplete(true)}>
+              Yes, start again
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   )
 }
