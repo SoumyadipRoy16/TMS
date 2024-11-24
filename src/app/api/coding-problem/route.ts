@@ -1,5 +1,9 @@
+// /api/coding-problem/route.ts
+
 import { NextResponse } from 'next/server'
 import { ObjectId } from 'mongodb'
+import { cookies } from 'next/headers'
+import jwt from 'jsonwebtoken'
 import connectDB from '@/lib/mongodb'
 
 // Types
@@ -18,10 +22,35 @@ type Question = {
 
 type Submission = {
   userId: string
+  username: string  // New field
   questionId: string
   code: string
   language: string
   timestamp: Date
+}
+
+// Helper function to get user info from token
+async function getUserFromToken(token: string) {
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret') as {
+      userId: string
+      email: string
+    }
+    
+    const db = await connectDB()
+    const user = await db.collection('users').findOne({ email: decoded.email })
+    
+    if (!user) {
+      throw new Error('User not found')
+    }
+    
+    return {
+      userId: user._id.toString(),
+      username: `${user.firstName} ${user.lastName}`.trim()
+    }
+  } catch (error) {
+    throw new Error('Invalid token')
+  }
 }
 
 export async function GET(request: Request) {
@@ -85,15 +114,29 @@ export async function POST(request: Request) {
       )
     }
     
+    // Get token from cookies
+    const token = cookies().get('token')
+    if (!token) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
+    
+    // Get user info from token
+    const userInfo = await getUserFromToken(token.value)
+    
     const db = await connectDB()
     
-    // Save the submission
-    const submissionWithTimestamp: Submission = {
+    // Save the submission with user info
+    const submissionWithUserInfo: Submission = {
       ...submission,
+      userId: userInfo.userId,
+      username: userInfo.username,
       timestamp: new Date()
     }
     
-    await db.collection('submissions').insertOne(submissionWithTimestamp)
+    await db.collection('submissions').insertOne(submissionWithUserInfo)
     
     // Get the next question
     const nextQuestion = await db.collection('questions').findOne(

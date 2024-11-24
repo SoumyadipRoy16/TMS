@@ -1,3 +1,5 @@
+// api/login/route.ts
+
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import jwt from 'jsonwebtoken'
@@ -31,7 +33,6 @@ export async function POST(request: Request) {
         role: user.role 
       },
       process.env.JWT_SECRET || 'fallback_secret',
-      { expiresIn: '1h' }
     )
 
     // Set the token in a cookie
@@ -39,7 +40,6 @@ export async function POST(request: Request) {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 3600, // 1 hour
       path: '/',
     })
 

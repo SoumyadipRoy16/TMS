@@ -1,3 +1,5 @@
+// app/dashboard/page.tsx
+
 'use client'
 
 import { useAuth } from '@/contexts/AuthContext'

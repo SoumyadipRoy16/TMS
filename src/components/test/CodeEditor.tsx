@@ -1,13 +1,15 @@
-'use client'
+// components/test/CodeEditor.tsx
 
-import { useState } from 'react'
-import Editor from '@monaco-editor/react'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useTheme } from 'next-themes'
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { useToast } from "@/components/ui/use-toast"
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
+'use client';
+
+import { useState } from 'react';
+import Editor from '@monaco-editor/react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useTheme } from 'next-themes';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 type Language = 'python' | 'javascript' | 'java' | 'cpp';
 
@@ -15,7 +17,7 @@ type Props = {
   currentQuestionId: string;
   onQuestionChange: (question: any) => void;
   onTestComplete: (shouldReattempt: boolean) => void;
-}
+};
 
 const languages: { value: Language; label: string }[] = [
   { value: 'python', label: 'Python' },
@@ -29,29 +31,30 @@ const defaultCode: Record<Language, string> = {
   javascript: '// Write your JavaScript code here',
   java: '// Write your Java code here',
   cpp: '// Write your C++ code here',
-}
+};
 
 export default function CodeEditor({ currentQuestionId, onQuestionChange, onTestComplete }: Props) {
-  const { theme } = useTheme()
-  const { showToast } = useToast()
-  const [language, setLanguage] = useState<Language>('python')
-  const [code, setCode] = useState(defaultCode[language])
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [showCompletionDialog, setShowCompletionDialog] = useState(false)
+  const { theme } = useTheme();
+  const { showToast } = useToast();
+  const [language, setLanguage] = useState<Language>('python');
+  const [code, setCode] = useState(defaultCode[language]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showCompletionDialog, setShowCompletionDialog] = useState(false);
+  const [showErrorDialog, setShowErrorDialog] = useState(false);
 
   const handleLanguageChange = (value: Language) => {
-    setLanguage(value)
-    setCode(defaultCode[value])
-  }
+    setLanguage(value);
+    setCode(defaultCode[value]);
+  };
 
   const handleEditorChange = (value: string | undefined) => {
     if (value !== undefined) {
-      setCode(value)
+      setCode(value);
     }
-  }
+  };
 
   const handleSubmit = async () => {
-    setIsSubmitting(true)
+    setIsSubmitting(true);
     try {
       const response = await fetch('/api/coding-problem', {
         method: 'POST',
@@ -63,29 +66,33 @@ export default function CodeEditor({ currentQuestionId, onQuestionChange, onTest
           code,
           language,
         }),
-      })
+      });
 
-      const data = await response.json()
+      if (!response.ok) {
+        throw new Error('Failed to submit code');
+      }
+
+      const data = await response.json();
 
       if (data.error) {
-        throw new Error(data.error)
+        throw new Error(data.error);
       }
 
-      showToast("Code submitted successfully", "default")
+      showToast("Code submitted successfully", "default");
 
       if (data.isComplete) {
-        setShowCompletionDialog(true)
+        setShowCompletionDialog(true);
       } else if (data.nextQuestion) {
-        // Reset editor for next question
-        setCode(defaultCode[language])
-        onQuestionChange(data.nextQuestion)
+        setCode(defaultCode[language]); // Reset editor for next question
+        onQuestionChange(data.nextQuestion);
       }
     } catch (error) {
-      showToast("Failed to submit code. Please try again.", "destructive")
+      showToast("Failed to submit code. Please try again.", "destructive");
+      setShowErrorDialog(true);  // Show error dialog in case of submission failure
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   return (
     <>
@@ -109,44 +116,48 @@ export default function CodeEditor({ currentQuestionId, onQuestionChange, onTest
             </Select>
           </div>
           <Editor
-            height="400px"
+            height="60vh"
+            theme={theme === 'dark' ? 'vs-dark' : 'vs-light'}
             language={language}
             value={code}
             onChange={handleEditorChange}
-            theme={theme === 'dark' ? 'vs-dark' : 'light'}
-            options={{
-              minimap: { enabled: false },
-              fontSize: 14,
-            }}
           />
-          <Button 
-            className="mt-4 w-full"
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? 'Submitting...' : 'Submit Code'}
-          </Button>
         </CardContent>
       </Card>
 
-      <AlertDialog open={showCompletionDialog} onOpenChange={setShowCompletionDialog}>
+      <div className="mt-4 flex justify-between">
+        <Button onClick={handleSubmit} disabled={isSubmitting}>
+          {isSubmitting ? 'Submitting...' : 'Submit Code'}
+        </Button>
+      </div>
+
+      <AlertDialog open={showCompletionDialog} onOpenChange={(open) => setShowCompletionDialog(open)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Test Complete!</AlertDialogTitle>
-            <AlertDialogDescription>
-              You still have one reattempt available. Would you like to try again?
-            </AlertDialogDescription>
+            <AlertDialogTitle>Submission Complete</AlertDialogTitle>
           </AlertDialogHeader>
+          <AlertDialogDescription>
+            You've completed all questions in this challenge. Congratulations!
+          </AlertDialogDescription>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => onTestComplete(false)}>
-              No, submit my answers
-            </AlertDialogCancel>
-            <AlertDialogAction onClick={() => onTestComplete(true)}>
-              Yes, start again
-            </AlertDialogAction>
+            <AlertDialogCancel onClick={() => setShowCompletionDialog(false)}>Close</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showErrorDialog} onOpenChange={(open) => setShowErrorDialog(open)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Submission Error</AlertDialogTitle>
+          </AlertDialogHeader>
+          <AlertDialogDescription>
+            Something went wrong while submitting your code. Please try again later.
+          </AlertDialogDescription>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setShowErrorDialog(false)}>Close</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </>
-  )
+  );
 }
