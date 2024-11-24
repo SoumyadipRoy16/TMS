@@ -1,6 +1,24 @@
 import { NextResponse } from 'next/server'
-import { ObjectId } from 'mongodb'
-import  connectDB  from '@/lib/mongodb'
+import { ObjectId, WithId, Document } from 'mongodb'
+import connectDB from '@/lib/mongodb'
+
+// Types to match the page component
+type TestCase = {
+  input: string
+  output: string
+}
+
+type Question = {
+  id: string
+  title: string
+  description: string
+  difficulty: 'Easy' | 'Medium' | 'Hard'
+  testCases: TestCase[]
+}
+
+type QuestionDB = Omit<Question, 'id'> & {
+  _id: ObjectId
+}
 
 export async function GET(request: Request) {
   try {
@@ -8,11 +26,23 @@ export async function GET(request: Request) {
     const difficulty = searchParams.get('difficulty')
     
     const db = await connectDB()
-    const questions = await db.collection('questions').find(
+    const questionsRaw = await db.collection('questions').find(
       difficulty ? { difficulty } : {}
     ).toArray()
     
-    return NextResponse.json(questions)
+    // Cast the raw documents to our QuestionDB type
+    const questions = questionsRaw as WithId<Document>[] as QuestionDB[]
+    
+    // Transform _id to id for frontend compatibility
+    const transformedQuestions: Question[] = questions.map(q => ({
+      id: q._id.toString(),
+      title: q.title,
+      description: q.description,
+      difficulty: q.difficulty,
+      testCases: q.testCases
+    }))
+    
+    return NextResponse.json(transformedQuestions)
   } catch (error) {
     console.error('GET Questions Error:', error)
     return NextResponse.json(
@@ -26,9 +56,37 @@ export async function POST(request: Request) {
   try {
     const question = await request.json()
     
-    if (!question.title || !question.description || !question.difficulty) {
+    // Validate required fields
+    if (!question.title || !question.description || !question.difficulty || !question.testCases) {
       return NextResponse.json(
         { error: 'Missing required fields' },
+        { status: 400 }
+      )
+    }
+    
+    // Validate test cases
+    if (!Array.isArray(question.testCases) || question.testCases.length === 0) {
+      return NextResponse.json(
+        { error: 'At least one test case is required' },
+        { status: 400 }
+      )
+    }
+
+    // Validate test case format
+    const validTestCases = question.testCases.every(
+      (tc: any) => typeof tc.input === 'string' && typeof tc.output === 'string'
+    )
+    if (!validTestCases) {
+      return NextResponse.json(
+        { error: 'Invalid test case format' },
+        { status: 400 }
+      )
+    }
+
+    // Validate difficulty
+    if (!['Easy', 'Medium', 'Hard'].includes(question.difficulty)) {
+      return NextResponse.json(
+        { error: 'Invalid difficulty level' },
         { status: 400 }
       )
     }
@@ -58,6 +116,33 @@ export async function PUT(request: Request) {
         { error: 'Question ID is required' },
         { status: 400 }
       )
+    }
+
+    // Validate update data
+    if (updateData.difficulty && !['Easy', 'Medium', 'Hard'].includes(updateData.difficulty)) {
+      return NextResponse.json(
+        { error: 'Invalid difficulty level' },
+        { status: 400 }
+      )
+    }
+
+    if (updateData.testCases) {
+      if (!Array.isArray(updateData.testCases) || updateData.testCases.length === 0) {
+        return NextResponse.json(
+          { error: 'At least one test case is required' },
+          { status: 400 }
+        )
+      }
+
+      const validTestCases = updateData.testCases.every(
+        (tc: any) => typeof tc.input === 'string' && typeof tc.output === 'string'
+      )
+      if (!validTestCases) {
+        return NextResponse.json(
+          { error: 'Invalid test case format' },
+          { status: 400 }
+        )
+      }
     }
     
     const db = await connectDB()
