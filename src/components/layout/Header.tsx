@@ -5,7 +5,6 @@ import Link from 'next/link'
 import { Menu, X } from 'lucide-react'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { useAuth } from '@/contexts/AuthContext'
-import { Button } from '../ui/button'
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -38,9 +37,16 @@ export default function Header() {
               <Link href="/test" className="text-foreground hover:text-primary">
                 Take Test
               </Link>
-              <Button variant="ghost" onClick={logout}>
+              <Link
+                href="/"
+                className="text-foreground hover:text-primary"
+                onClick={(e) => {
+                  e.preventDefault();
+                  logout();
+                }}
+              >
                 Logout
-              </Button>
+              </Link>
             </>
           )}
           <ThemeToggle />
@@ -74,9 +80,16 @@ export default function Header() {
               <Link href="/test" className="block py-2 px-4 text-sm hover:bg-accent">
                 Take Test
               </Link>
-              <button onClick={logout} className="block w-full text-left py-2 px-4 text-sm hover:bg-accent">
+              <Link
+                href="/"
+                className="block w-full text-left py-2 px-4 text-sm hover:bg-accent"
+                onClick={(e) => {
+                  e.preventDefault();
+                  logout();
+                }}
+              >
                 Logout
-              </button>
+              </Link>
             </>
           )}
           <div className="py-2 px-4">
