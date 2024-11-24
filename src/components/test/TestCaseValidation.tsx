@@ -1,6 +1,5 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 type TestCase = {
@@ -8,20 +7,33 @@ type TestCase = {
   output: string
 }
 
-export default function TestCaseValidation() {
-  const [testCases, setTestCases] = useState<TestCase[]>([])
+type TestCaseValidationProps = {
+  testCases: TestCase[]
+  isLoading?: boolean
+}
 
-  useEffect(() => {
-    async function fetchTestCases() {
-      const response = await fetch('/api/coding-problem')
-      const data = await response.json()
-      setTestCases(data.testCases)
-    }
-    fetchTestCases()
-  }, [])
-
-  if (testCases.length === 0) {
-    return <div className="text-muted-foreground">Loading...</div>
+export default function TestCaseValidation({ 
+  testCases, 
+  isLoading = false 
+}: TestCaseValidationProps) {
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <div className="h-7 w-32 bg-muted animate-pulse rounded"></div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="border-b pb-4 last:border-b-0">
+                <div className="h-4 bg-muted animate-pulse rounded w-3/4 mb-2"></div>
+                <div className="h-4 bg-muted animate-pulse rounded w-1/2"></div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (

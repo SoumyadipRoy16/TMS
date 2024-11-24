@@ -6,8 +6,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useTheme } from 'next-themes'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { useToast } from "@/components/ui/use-toast"
 
 type Language = 'python' | 'javascript' | 'java' | 'cpp';
+
+type Props = {
+  currentQuestionId: string;
+  onQuestionChange: (question: any) => void;
+}
 
 const languages: { value: Language; label: string }[] = [
   { value: 'python', label: 'Python' },
@@ -23,10 +29,12 @@ const defaultCode: Record<Language, string> = {
   cpp: '// Write your C++ code here',
 }
 
-export default function CodeEditor() {
+export default function CodeEditor({ currentQuestionId, onQuestionChange }: Props) {
   const { theme } = useTheme()
+  const { showToast } = useToast()
   const [language, setLanguage] = useState<Language>('python')
   const [code, setCode] = useState(defaultCode[language])
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleLanguageChange = (value: Language) => {
     setLanguage(value)
@@ -36,6 +44,43 @@ export default function CodeEditor() {
   const handleEditorChange = (value: string | undefined) => {
     if (value !== undefined) {
       setCode(value)
+    }
+  }
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true)
+    try {
+      const response = await fetch('/api/coding-problem', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          questionId: currentQuestionId,
+          code,
+          language,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (data.error) {
+        throw new Error(data.error)
+      }
+
+      showToast("Code submitted successfully", "default")
+
+      if (data.isComplete) {
+        showToast("You have completed all questions!", "default")
+      } else if (data.nextQuestion) {
+        // Reset editor for next question
+        setCode(defaultCode[language])
+        onQuestionChange(data.nextQuestion)
+      }
+    } catch (error) {
+      showToast("Failed to submit code. Please try again.", "destructive")
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -70,8 +115,12 @@ export default function CodeEditor() {
             fontSize: 14,
           }}
         />
-        <Button className="mt-4 w-full">
-          Submit Code
+        <Button 
+          className="mt-4 w-full"
+          onClick={handleSubmit}
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? 'Submitting...' : 'Submit Code'}
         </Button>
       </CardContent>
     </Card>

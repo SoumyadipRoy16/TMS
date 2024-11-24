@@ -1,3 +1,5 @@
+// /api/admin/questions/route.ts
+
 import { NextResponse } from 'next/server'
 import { ObjectId, WithId, Document } from 'mongodb'
 import connectDB from '@/lib/mongodb'
