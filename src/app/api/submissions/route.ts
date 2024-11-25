@@ -7,7 +7,7 @@ type Submission = {
   username: string
   questionId: string
   code: string
-  timestamp: string
+  timestamp: Date  // Changed to Date type
 }
 
 export async function GET(request: Request) {
@@ -28,7 +28,7 @@ export async function GET(request: Request) {
       username: submission.username,
       questionId: submission.questionId,
       code: submission.code,
-      timestamp: new Date(submission.timestamp).toLocaleString(),
+      timestamp: new Date(submission.timestamp), // Keep as Date object instead of converting to string
     }))
 
     return NextResponse.json(transformedSubmissions)

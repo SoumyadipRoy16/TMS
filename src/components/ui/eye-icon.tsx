@@ -1,26 +1,38 @@
-import { useState } from 'react'
-import { EyeIcon as Eye } from 'lucide-react'
+import React, { useState } from 'react';
+import { Eye } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
-export default function EyeIcon({ code }: { code: string }) {
-    const [isModalOpen, setModalOpen] = useState(false)
+const EyeIcon = ({ code }: { code: string }) => {
+  const [isOpen, setIsOpen] = useState(false);
 
-    return (
-        <div>
-            <Eye className="w-5 h-5 text-blue-500 cursor-pointer" onClick={() => setModalOpen(true)} />
-            {isModalOpen && (
-                <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center">
-                    <div className="bg-white p-4 rounded-lg w-1/2">
-                        <h2 className="text-xl font-bold mb-4">Code Submission</h2>
-                        <pre className="bg-gray-100 p-4">{code}</pre>
-                        <button
-                            onClick={() => setModalOpen(false)}
-                            className="mt-4 bg-blue-500 text-white py-2 px-4 rounded"
-                        >
-                            Close
-                        </button>
-                    </div>
-                </div>
-            )}
-        </div>
-    )
-}
+  return (
+    <>
+      <button 
+        onClick={() => setIsOpen(true)}
+        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+      >
+        <Eye className="h-5 w-5" />
+      </button>
+
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Code Submission</DialogTitle>
+          </DialogHeader>
+          <div className="max-h-96 overflow-y-auto">
+            <pre className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg text-sm text-gray-900 dark:text-gray-100 border dark:border-gray-800">
+              {code}
+            </pre>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+};
+
+export default EyeIcon;
