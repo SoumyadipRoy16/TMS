@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import CodeEditor from '@/components/test/CodeEditor'
 import ProblemStatement from '@/components/test/ProblemStatement'
@@ -88,6 +89,12 @@ function TestContent() {
         </div>
       </div>
     )
+  }
+
+  const { user } = useAuth()
+
+  if (!user) {
+    return <div className="text-center text-foreground">Please log in to take the test.</div>
   }
 
   return (
