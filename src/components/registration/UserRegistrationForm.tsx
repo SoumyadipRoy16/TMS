@@ -5,7 +5,6 @@ import { useForm } from 'react-hook-form'
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import { SocialMediaAuth } from "@/components/SocialMediaAuth"
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import { UserFormData, RegistrationFormProps } from '@/types/registration'
@@ -129,7 +128,6 @@ export function UserRegistrationForm({ onSubmit }: RegistrationFormProps<UserFor
           {isSubmitting ? 'Registering...' : 'Register as User'}
         </Button>
       </form>
-      <SocialMediaAuth action="Register" />
     </div>
   )
 }
