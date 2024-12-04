@@ -30,7 +30,7 @@ export const sendOTPEmail = async (email: string) => {
     console.log('OTP Stored for:', email);
 
     await transporter.sendMail({
-      from: process.env.SMTP_USER,
+      from: process.env.SMTP_FROM_EMAIL,
       to: email,
       subject: 'Your OTP for Registration',
       text: `Your OTP is: ${otp}. This OTP will expire in 10 minutes.`,
