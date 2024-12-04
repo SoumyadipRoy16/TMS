@@ -1,5 +1,3 @@
-// /register/page.tsx
-
 'use client'
 
 import { useState } from 'react'
@@ -9,10 +7,12 @@ import { AdminRegistrationForm } from '@/components/registration/AdminRegistrati
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Toast } from "@/components/ui/toast"
-import { UserFormData, AdminFormData } from '@/types/registration'
+import { UserFormData, AdminFormData, OTPVerificationResponse } from '@/types/registration'
 
 export default function Register() {
   const [isUser, setIsUser] = useState(true)
+  const [otpSent, setOtpSent] = useState(false)
+  const [registrationData, setRegistrationData] = useState<Partial<UserFormData | AdminFormData>>({})
   const [toast, setToast] = useState<{
     message: string, 
     variant?: "default" | "destructive", 
@@ -31,7 +31,7 @@ export default function Register() {
     }, 3000)
   }
 
-  const handleRegistration = async (formData: UserFormData | AdminFormData) => {
+  const handleInitialRegistration = async (formData: UserFormData) => {
     try {
       const response = await fetch('/api/register', {
         method: 'POST',
@@ -44,15 +44,59 @@ export default function Register() {
         })
       });
 
-      const result = await response.json();
+      const result: OTPVerificationResponse = await response.json();
+
+      console.log('Initial Registration Response:', result);
+
+      if (result.otpRequired && result.registrationData) {
+        // OTP is required, switch to OTP input mode
+        setOtpSent(true)
+        setRegistrationData(result.registrationData)
+        showToast("OTP sent to your email. Please verify.", "default")
+      } else if (result.success) {
+        // Direct registration success (for admin or other scenarios)
+        showToast("Registration successful!", "default")
+      } else {
+        // Registration failed
+        showToast(result.message || "Registration failed", "destructive")
+        console.error('Registration Failed:', result.message)
+      }
+    } catch (error) {
+      console.error('Registration Error:', error)
+      showToast("Registration failed. Please try again.", "destructive")
+    }
+  }
+
+  const handleOTPVerification = async (formData: UserFormData) => {
+    try {
+      const response = await fetch('/api/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          ...registrationData, 
+          otp: formData.otp 
+        })
+      });
+
+      const result: OTPVerificationResponse = await response.json();
+
+      console.log('OTP Verification Response:', result);
 
       if (result.success) {
         showToast("Registration successful!", "default")
+        setOtpSent(false)
+        setRegistrationData({})
       } else {
-        showToast(result.message || "Registration failed", "destructive")
+        showToast(result.message || "OTP verification failed", "destructive")
+        console.error('OTP Verification Failed:', result.message)
+        setOtpSent(false)
       }
     } catch (error) {
-      showToast("Registration failed. Please try again.", "destructive")
+      console.error('OTP Verification Error:', error)
+      showToast("OTP verification failed. Please try again.", "destructive")
+      setOtpSent(false)
     }
   }
 
@@ -92,9 +136,11 @@ export default function Register() {
               key={isUser ? 'user' : 'admin'}
             >
               {isUser ? (
-                <UserRegistrationForm onSubmit={handleRegistration} />
+                <UserRegistrationForm 
+                  onSubmit={!otpSent ? handleInitialRegistration : handleOTPVerification} 
+                />
               ) : (
-                <AdminRegistrationForm onSubmit={handleRegistration} />
+                <AdminRegistrationForm onSubmit={handleInitialRegistration} />
               )}
             </motion.div>
           </CardContent>
