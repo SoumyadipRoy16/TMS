@@ -46,8 +46,6 @@ export default function Register() {
 
       const result: OTPVerificationResponse = await response.json();
 
-      console.log('Initial Registration Response:', result);
-
       if (result.otpRequired && result.registrationData) {
         // OTP is required, switch to OTP input mode
         setOtpSent(true)
@@ -59,10 +57,8 @@ export default function Register() {
       } else {
         // Registration failed
         showToast(result.message || "Registration failed", "destructive")
-        console.error('Registration Failed:', result.message)
       }
     } catch (error) {
-      console.error('Registration Error:', error)
       showToast("Registration failed. Please try again.", "destructive")
     }
   }
@@ -82,19 +78,17 @@ export default function Register() {
 
       const result: OTPVerificationResponse = await response.json();
 
-      console.log('OTP Verification Response:', result);
-
       if (result.success) {
         showToast("Registration successful!", "default")
+        // You might want to redirect or reset the form here
         setOtpSent(false)
         setRegistrationData({})
       } else {
         showToast(result.message || "OTP verification failed", "destructive")
-        console.error('OTP Verification Failed:', result.message)
+        // Optionally, you can reset OTP state to allow retrying
         setOtpSent(false)
       }
     } catch (error) {
-      console.error('OTP Verification Error:', error)
       showToast("OTP verification failed. Please try again.", "destructive")
       setOtpSent(false)
     }
