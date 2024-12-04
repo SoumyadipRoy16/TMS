@@ -1,3 +1,5 @@
+//src/components/registration/AdminRegistrationForm.tsx
+
 'use client'
 
 import { useState } from 'react'
@@ -31,7 +33,7 @@ export function AdminRegistrationForm({ onSubmit }: RegistrationFormProps<AdminF
       if (response.ok) {
         const userData = await response.json()
         login(userData)
-        router.push('/admin/dashboard')
+        router.push('/login')
       } else {
         console.error('Registration failed')
       }

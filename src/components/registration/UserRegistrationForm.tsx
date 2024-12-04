@@ -3,12 +3,14 @@
 
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { useRouter } from 'next/navigation'
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { UserFormData, RegistrationFormProps } from '@/types/registration'
 
 export function UserRegistrationForm({ onSubmit }: RegistrationFormProps<UserFormData>) {
+  const router = useRouter()
   const {
     register,
     handleSubmit,
@@ -27,6 +29,8 @@ export function UserRegistrationForm({ onSubmit }: RegistrationFormProps<UserFor
         // If OTP is sent, we'll let the parent component handle the state
         if (!otpSent) {
           setOtpSent(true)
+        }else{
+          router.push('/login')
         }
       } catch (error) {
         console.error('Submission error:', error)

@@ -6,12 +6,14 @@ import { UserRegistrationForm } from '@/components/registration/UserRegistration
 import { AdminRegistrationForm } from '@/components/registration/AdminRegistrationForm'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { useRouter } from 'next/navigation'
 import { Toast } from "@/components/ui/toast"
 import { UserFormData, AdminFormData, OTPVerificationResponse } from '@/types/registration'
 
 export default function Register() {
   const [isUser, setIsUser] = useState(true)
   const [otpSent, setOtpSent] = useState(false)
+  const router = useRouter()
   const [registrationData, setRegistrationData] = useState<Partial<UserFormData | AdminFormData>>({})
   const [toast, setToast] = useState<{
     message: string, 
@@ -54,6 +56,7 @@ export default function Register() {
       } else if (result.success) {
         // Direct registration success (for admin or other scenarios)
         showToast("Registration successful!", "default")
+        router.push('/login')
       } else {
         // Registration failed
         showToast(result.message || "Registration failed", "destructive")
