@@ -29,6 +29,28 @@ export default function Header() {
                 Login
               </Link>
             </>
+          ) : user.role === 'admin' ? (
+            <>
+              <Link href="/admin/manage-questions" className="text-foreground hover:text-primary">
+                Manage Questions
+              </Link>
+              <Link href="/admin/approve-applications" className="text-foreground hover:text-primary">
+                Approve Applications
+              </Link>
+              <Link href="/admin/monitor-results" className="text-foreground hover:text-primary">
+                Monitor Results
+              </Link>
+              <Link
+                href="/"
+                className="text-foreground hover:text-primary"
+                onClick={(e) => {
+                  e.preventDefault();
+                  logout();
+                }}
+              >
+                Logout
+              </Link>
+            </>
           ) : (
             <>
               <Link href="/dashboard" className="text-foreground hover:text-primary">
@@ -70,6 +92,28 @@ export default function Header() {
               </Link>
               <Link href="/login" className="block py-2 px-4 text-sm hover:bg-accent">
                 Login
+              </Link>
+            </>
+          ) : user.role === 'admin' ? (
+            <>
+              <Link href="/admin/manage-questions" className="block py-2 px-4 text-sm hover:bg-accent">
+                Manage Questions
+              </Link>
+              <Link href="/admin/approve-applications" className="block py-2 px-4 text-sm hover:bg-accent">
+                Approve Applications
+              </Link>
+              <Link href="/admin/monitor-results" className="block py-2 px-4 text-sm hover:bg-accent">
+                Monitor Results
+              </Link>
+              <Link
+                href="/"
+                className="block w-full text-left py-2 px-4 text-sm hover:bg-accent"
+                onClick={(e) => {
+                  e.preventDefault();
+                  logout();
+                }}
+              >
+                Logout
               </Link>
             </>
           ) : (
