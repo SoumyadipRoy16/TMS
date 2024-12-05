@@ -1,7 +1,7 @@
 // src/components/registration/UserRegistrationForm.tsx
 'use client'
 
-import { useState } from 'react'
+import { ChangeEvent, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useRouter } from 'next/navigation'
 import { Input } from "@/components/ui/input"
@@ -14,18 +14,54 @@ export function UserRegistrationForm({ onSubmit }: RegistrationFormProps<UserFor
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
     reset
   } = useForm<UserFormData>()
   
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [otpSent, setOtpSent] = useState(false)
+  const [resumeFile, setResumeFile] = useState<File | null>(null)
+
+  const handleResumeChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      // Validate PDF
+      if (file.type !== 'application/pdf') {
+        alert('Only PDF files are allowed')
+        e.target.value = '' // Clear the input
+        return
+      }
+      
+      // Validate file size (optional, e.g., max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('File size should be less than 5MB')
+        e.target.value = '' // Clear the input
+        return
+      }
+
+      setResumeFile(file)
+      setValue('resume', file)
+    }
+  }
 
   const submitHandler = async (data: UserFormData) => {
     if (onSubmit) {
       setIsSubmitting(true)
       try {
-        await onSubmit(data)
+        if (!otpSent) {
+          // Ensure resume is uploaded for user registration
+          if (!resumeFile) {
+            alert('Please upload your resume')
+            setIsSubmitting(false)
+            return
+          }
+        }
+
+        await onSubmit({
+          ...data,
+          resume: resumeFile
+        })
         // If OTP is sent, we'll let the parent component handle the state
         if (!otpSent) {
           setOtpSent(true)
@@ -118,6 +154,24 @@ export function UserRegistrationForm({ onSubmit }: RegistrationFormProps<UserFor
         />
         {errors.skills && (
           <p className="text-sm text-destructive">{errors.skills.message}</p>
+        )}
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="resume">Upload Resume (PDF only)</Label>
+        <Input
+          id="resume"
+          type="file"
+          accept=".pdf"
+          onChange={handleResumeChange}
+          required
+        />
+        {resumeFile && (
+          <p className="text-sm text-muted-foreground">
+            Selected file: {resumeFile.name}
+          </p>
+        )}
+        {!resumeFile && (
+          <p className="text-sm text-destructive">Resume is required</p>
         )}
       </div>
     </>

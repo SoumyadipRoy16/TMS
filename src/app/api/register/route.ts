@@ -1,51 +1,75 @@
-// src/app/api/register/route.ts
-
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 import { sendOTPEmail, sendWelcomeEmail } from '@/lib/email';
 import { verifyOTP } from '@/lib/redis';
+import { writeFile } from 'fs/promises';
+import path from 'path';
 
 const ADMIN_CODE = process.env.ADMIN_CODE || 'default_admin_code';
 
 export async function POST(request: Request) {
   await connectDB();
-  const body = await request.json();
-  const { firstName, lastName, email, password, role, adminCode, otp } = body;
-
-  console.log('Registration Request Body:', {
-    email,
-    role,
-    otpProvided: !!otp,
-    otp: otp ? 'REDACTED' : 'NOT PROVIDED',
+  const formData = await request.formData();
+  
+  // Convert FormData to an object
+  const data: { [key: string]: any } = {};
+  formData.forEach((value, key) => {
+    data[key] = value;
   });
 
+  const { 
+    firstName, 
+    lastName, 
+    email, 
+    password, 
+    role, 
+    adminCode, 
+    otp,
+    education,
+    skills 
+  } = data;
+
   try {
+    // Resume handling for user registration
+    let resumePath = null;
+    if (role === 'user' && formData.get('resume')) {
+      const resume = formData.get('resume') as File;
+      
+      // Generate unique filename
+      const filename = `${Date.now()}_${resume.name}`;
+      const uploadDir = path.join(process.cwd(), 'public', 'resumes');
+      
+      // Ensure directory exists
+      await writeFile(
+        path.join(uploadDir, filename), 
+        Buffer.from(await resume.arrayBuffer())
+      );
+
+      resumePath = `/resumes/${filename}`;
+    }
+
     // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      console.log('User already exists:', email);
       return NextResponse.json(
         { success: false, message: 'User already exists' },
         { status: 400 }
       );
     }
 
-    // Admin Registration
+    // Admin Registration (simplified for brevity)
     if (role === 'admin') {
       if (!adminCode || adminCode !== ADMIN_CODE) {
-        console.log('Invalid admin code for:', email);
         return NextResponse.json(
           { success: false, message: 'Invalid admin code' },
           { status: 403 }
         );
       }
 
-      // Hash the password
       const hashedPassword = await bcrypt.hash(password, 10);
 
-      // Create new admin
       const newAdmin = new User({
         firstName,
         lastName,
@@ -55,8 +79,6 @@ export async function POST(request: Request) {
       });
 
       await newAdmin.save();
-
-      console.log('Admin registered successfully:', email);
 
       return NextResponse.json(
         {
@@ -70,9 +92,8 @@ export async function POST(request: Request) {
 
     // User Registration with OTP
     if (role === 'user') {
-      // OTP is always required for user registration
+      // OTP sending logic
       if (!otp) {
-        console.log('Sending OTP to:', email);
         const otpSent = await sendOTPEmail(email);
         if (otpSent) {
           return NextResponse.json(
@@ -86,14 +107,14 @@ export async function POST(request: Request) {
                 email,
                 password,
                 role,
-                education: body.education,
-                skills: body.skills,
+                education,
+                skills,
+                resumePath,
               },
             },
             { status: 200 }
           );
         } else {
-          console.log('Failed to send OTP to:', email);
           return NextResponse.json(
             { success: false, message: 'Failed to send OTP' },
             { status: 500 }
@@ -101,14 +122,9 @@ export async function POST(request: Request) {
         }
       }
 
-      // OTP Verification Step
-      console.log('Attempting OTP Verification for:', email);
+      // OTP Verification
       const isOTPValid = await verifyOTP(email, otp);
-
-      console.log('OTP Verification Result:', isOTPValid);
-
       if (!isOTPValid) {
-        console.log('Invalid OTP for email:', email);
         return NextResponse.json(
           { success: false, message: 'Invalid or expired OTP' },
           { status: 400 }
@@ -118,22 +134,25 @@ export async function POST(request: Request) {
       // Hash the password
       const hashedPassword = await bcrypt.hash(password, 10);
 
-      // Create new user
+      // Create new user with resume
       const newUser = new User({
         firstName,
         lastName,
         email,
         password: hashedPassword,
         role,
-        education: body.education,
-        skills: body.skills,
+        education,
+        skills,
+        resume: resumePath ? {
+          filename: resumePath.split('/').pop(),
+          path: resumePath,
+          mimetype: 'application/pdf'
+        } : undefined,
       });
 
       await newUser.save();
 
       await sendWelcomeEmail(firstName, email);
-
-      console.log('User registered successfully:', email);
 
       return NextResponse.json(
         {

@@ -35,15 +35,29 @@ export default function Register() {
 
   const handleInitialRegistration = async (formData: UserFormData) => {
     try {
+      // Create FormData for file upload
+      const form = new FormData();
+      
+      // Append all text fields
+      Object.keys(formData).forEach(key => {
+        const value = formData[key as keyof UserFormData];
+        if (key !== 'resume' && value) {
+          form.append(key, String(value));
+        }
+      });
+
+      // Append role
+      form.append('role', isUser ? 'user' : 'admin');
+
+      // Append resume if it exists
+      if (formData.resume) {
+        form.append('resume', formData.resume);
+      }
+
       const response = await fetch('/api/register', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...formData,
-          role: isUser ? 'user' : 'admin'
-        })
+        body: form
+        // Note: DO NOT set Content-Type header, let the browser set it automatically
       });
 
       const result: OTPVerificationResponse = await response.json();
@@ -68,27 +82,36 @@ export default function Register() {
 
   const handleOTPVerification = async (formData: UserFormData) => {
     try {
+      const form = new FormData();
+      
+      // Add stored registration data
+      Object.keys(registrationData).forEach(key => {
+        const value = registrationData[key as keyof UserFormData];
+        if (value) {
+          form.append(key, String(value));
+        }
+      });
+
+      // Add OTP
+      if (formData.otp) {
+        form.append('otp', formData.otp);
+      }
+
       const response = await fetch('/api/register', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          ...registrationData, 
-          otp: formData.otp 
-        })
+        body: form
+        // Note: DO NOT set Content-Type header, let the browser set it automatically
       });
 
       const result: OTPVerificationResponse = await response.json();
 
       if (result.success) {
         showToast("Registration successful!", "default")
-        // You might want to redirect or reset the form here
         setOtpSent(false)
         setRegistrationData({})
+        router.push('/login')
       } else {
         showToast(result.message || "OTP verification failed", "destructive")
-        // Optionally, you can reset OTP state to allow retrying
         setOtpSent(false)
       }
     } catch (error) {
