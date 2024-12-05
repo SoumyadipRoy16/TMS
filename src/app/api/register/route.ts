@@ -1,8 +1,10 @@
+// src/app/api/register/route.ts
+
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
-import { sendOTPEmail } from '@/lib/email';
+import { sendOTPEmail, sendWelcomeEmail } from '@/lib/email';
 import { verifyOTP } from '@/lib/redis';
 
 const ADMIN_CODE = process.env.ADMIN_CODE || 'default_admin_code';
@@ -128,6 +130,8 @@ export async function POST(request: Request) {
       });
 
       await newUser.save();
+
+      await sendWelcomeEmail(firstName, email);
 
       console.log('User registered successfully:', email);
 
