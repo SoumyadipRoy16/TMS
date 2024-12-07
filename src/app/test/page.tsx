@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import CodeEditor from '@/components/test/CodeEditor'
@@ -36,6 +36,97 @@ function TestContent() {
   const [isCameraAllowed, setIsCameraAllowed] = useState(false)
   const { showToast } = useToast()
   const [showFullScreenDialog, setShowFullScreenDialog] = useState(false)
+  
+  // New state for tab switching
+  const [tabSwitchCount, setTabSwitchCount] = useState(0)
+  const [isTabSwitchWarningOpen, setIsTabSwitchWarningOpen] = useState(false)
+
+  useEffect(() => {
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+    if (isMobile) {
+      router.push('/mobile-test-restriction')
+    }
+  }, [router])
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden && isTestStarted) {
+        // Increment tab switch count
+        setTabSwitchCount(prev => {
+          const newCount = prev + 1
+          
+          if (newCount > 3) {
+            // End test after 3 warnings
+            handleTestFailure()
+            return newCount
+          }
+          
+          // Open warning dialog
+          setIsTabSwitchWarningOpen(true)
+          return newCount
+        })
+      }
+    }
+
+    const handleFullScreenChange = () => {
+      if (isTestStarted && !document.fullscreenElement) {
+        // Treat exiting full-screen as tab switch
+        handleVisibilityChange()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    document.addEventListener('fullscreenchange', handleFullScreenChange)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      document.removeEventListener('fullscreenchange', handleFullScreenChange)
+    }
+  }, [isTestStarted])
+
+  const handleTestFailure = async () => {
+    try {
+      await fetch('/api/test/end', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          reason: 'Excessive tab switching',
+          status: 'disqualified'
+        })
+      })
+      
+      router.push('/test-disqualified')
+    } catch (error) {
+      showToast("Failed to end test", "destructive")
+    }
+  }
+
+  const autoSaveProgress = useCallback(async () => {
+    // Implement auto-save logic here
+    try {
+      await fetch('/api/test/autosave', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          questionId: question?.id,
+          // Include other necessary data like code, current state
+        })
+      })
+    } catch (error) {
+      showToast("Auto-save failed", "destructive")
+    }
+  }, [question])
+
+  useEffect(() => {
+    if (isTestStarted) {
+      const autoSaveInterval = setInterval(autoSaveProgress, 2 * 60 * 1000) // Every 2 minutes
+      return () => clearInterval(autoSaveInterval)
+    }
+  }, [isTestStarted, autoSaveProgress])
 
   const fetchQuestion = async (currentQuestionId?: string) => {
     try {
@@ -209,34 +300,58 @@ function TestContent() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-foreground">Coding Test</h1>
-        <Timer />
-      </div>
-      
-      <div className="grid lg:grid-cols-2 gap-6">
-        <div className="space-y-6">
-          <ProblemStatement
-            title={question?.title ?? ''}
-            description={question?.description ?? ''}
-            examples={question?.examples}
-            isLoading={isLoading}
-          />
-          <TestCaseValidation
-            testCases={question?.testCases ?? []}
-            isLoading={isLoading}
-          />
+    <>
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold text-foreground">Coding Test</h1>
+          <Timer onTimeExpired={function (questionIndex: number): void {
+            throw new Error('Function not implemented.')
+          } } totalQuestions={3} />
         </div>
-        <div>
-          <CodeEditor
-            currentQuestionId={question?.id ?? ''}
-            onQuestionChange={handleQuestionChange}
-            onTestComplete={handleTestComplete}
-          />
+        
+        <div className="grid lg:grid-cols-2 gap-6">
+          <div className="space-y-6">
+            <ProblemStatement
+              title={question?.title ?? ''}
+              description={question?.description ?? ''}
+              examples={question?.examples}
+              isLoading={isLoading}
+            />
+            <TestCaseValidation
+              testCases={question?.testCases ?? []}
+              isLoading={isLoading}
+            />
+          </div>
+          <div>
+            <CodeEditor
+              currentQuestionId={question?.id ?? ''}
+              onQuestionChange={handleQuestionChange}
+              onTestComplete={handleTestComplete}
+            />
+          </div>
         </div>
       </div>
-    </div>
+      <AlertDialog 
+        open={isTabSwitchWarningOpen} 
+        onOpenChange={setIsTabSwitchWarningOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Warning: Tab Switching Detected</AlertDialogTitle>
+            <AlertDialogDescription>
+              {tabSwitchCount < 3 
+                ? `You have ${3 - tabSwitchCount} warnings left. Multiple tab switches may result in test disqualification.`
+                : "You have been disqualified from the test due to excessive tab switching."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setIsTabSwitchWarningOpen(false)}>
+              Continue Test
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   )
 }
 

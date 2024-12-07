@@ -1,3 +1,5 @@
+// src/models/Submission.ts
+
 import mongoose, { Schema, Document } from 'mongoose';
 
 interface Submission extends Document {

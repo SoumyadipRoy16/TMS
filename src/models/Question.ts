@@ -1,3 +1,5 @@
+// src/models/Question.ts
+
 import mongoose, { Schema, Document } from 'mongoose';
 
 // Define the TestCase type (which represents the individual test cases for the question)
