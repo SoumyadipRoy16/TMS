@@ -1,5 +1,3 @@
-// src/app/test/page.tsx
-
 'use client'
 
 import { useEffect, useState } from 'react'
@@ -10,6 +8,8 @@ import ProblemStatement from '@/components/test/ProblemStatement'
 import TestCaseValidation from '@/components/test/TestCaseValidation'
 import Timer from '@/components/test/Timer'
 import { useToast, ToastProvider } from "@/components/ui/use-toast"
+import { Button } from "@/components/ui/button"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 
 type Question = {
   id: string
@@ -32,7 +32,10 @@ function TestContent() {
   const [question, setQuestion] = useState<Question | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isComplete, setIsComplete] = useState(false)
+  const [isTestStarted, setIsTestStarted] = useState(false)
+  const [isCameraAllowed, setIsCameraAllowed] = useState(false)
   const { showToast } = useToast()
+  const [showFullScreenDialog, setShowFullScreenDialog] = useState(false)
 
   const fetchQuestion = async (currentQuestionId?: string) => {
     try {
@@ -62,18 +65,47 @@ function TestContent() {
     fetchQuestion()
   }, [])
 
+  const handleFullScreen = async () => {
+    try {
+      if (document.documentElement.requestFullscreen) {
+        await document.documentElement.requestFullscreen()
+      } else if ((document.documentElement as any).mozRequestFullScreen) { // Firefox
+        await (document.documentElement as any).mozRequestFullScreen()
+      } else if ((document.documentElement as any).webkitRequestFullscreen) { // Chrome, Safari and Opera
+        await (document.documentElement as any).webkitRequestFullscreen()
+      } else if ((document.documentElement as any).msRequestFullscreen) { // IE/Edge
+        await (document.documentElement as any).msRequestFullscreen()
+      }
+      setShowFullScreenDialog(true)
+    } catch (error) {
+      showToast("Could not enter full-screen mode", "destructive")
+    }
+  }
+
+  const handleCameraPermission = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+      stream.getTracks().forEach(track => track.stop())
+      setIsCameraAllowed(true)
+    } catch (error) {
+      showToast("Camera access denied. Please allow camera for the test.", "destructive")
+    }
+  }
+
+  const startTest = () => {
+    setIsTestStarted(true)
+  }
+
   const handleQuestionChange = (newQuestion: Question) => {
     setQuestion(newQuestion)
   }
 
   const handleTestComplete = (shouldReattempt: boolean) => {
     if (shouldReattempt) {
-      // Reset the test and start from the beginning
       fetchQuestion()
       showToast("Starting your final attempt", "default")
     } else {
       setIsComplete(true)
-      // Redirect to dashboard after 5 seconds
       setTimeout(() => {
         router.push('/dashboard')
       }, 5000)
@@ -97,6 +129,83 @@ function TestContent() {
 
   if (!user) {
     return <div className="text-center text-foreground">Please log in to take the test.</div>
+  }
+
+  // Guidelines Page
+  if (!isTestStarted) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-2xl">
+        <div className="bg-card p-8 rounded-lg shadow-lg">
+          <h1 className="text-3xl font-bold mb-6 text-center">Test Guidelines</h1>
+          
+          <div className="space-y-4 mb-6">
+            <div className="flex items-start space-x-3">
+              <span className="text-2xl font-bold text-primary">1</span>
+              <p>There will be <strong>5 questions</strong> on mixed topics related to Data Structures and Algorithms.</p>
+            </div>
+            
+            <div className="flex items-start space-x-3">
+              <span className="text-2xl font-bold text-primary">2</span>
+              <p>You can use any of the following languages: <strong>Python, Java, JavaScript, C/C++</strong>.</p>
+            </div>
+            
+            <div className="flex items-start space-x-3">
+              <span className="text-2xl font-bold text-primary">3</span>
+              <p>You will have <strong>exactly 1 hour</strong> to finish the test.</p>
+            </div>
+            
+            <div className="flex items-start space-x-3">
+              <span className="text-2xl font-bold text-primary">4</span>
+              <p>You will have <strong>1 reattempt chance</strong> for each question.</p>
+            </div>
+            
+            <div className="flex items-start space-x-3">
+              <span className="text-2xl font-bold text-primary">5</span>
+              <p><strong>Do not use any unfair means</strong>. This includes but is not limited to: 
+                external help, copying code, or using unauthorized resources.</p>
+            </div>
+          </div>
+          
+          <div className="space-y-4">
+            <Button 
+              onClick={handleFullScreen} 
+              className="w-full"
+              variant="outline"
+            >
+              Enter Full Screen Mode
+            </Button>
+          </div>
+
+          <AlertDialog open={showFullScreenDialog} onOpenChange={setShowFullScreenDialog}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Full Screen Enabled</AlertDialogTitle>
+                <AlertDialogDescription>
+                  You are now in full-screen mode. Next, we'll request camera access.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogAction onClick={handleCameraPermission}>
+                  Allow Camera Access
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          {isCameraAllowed && (
+            <div className="mt-4">
+              <Button 
+                onClick={startTest} 
+                className="w-full"
+                disabled={!isCameraAllowed}
+              >
+                Start Test
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
+    )
   }
 
   return (
