@@ -2,21 +2,24 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Editor from '@monaco-editor/react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTheme } from 'next-themes';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from "@/components/ui/use-toast";
-import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogAction } from "@/components/ui/alert-dialog";
 
 type Language = 'python' | 'javascript' | 'java' | 'cpp';
 
 type Props = {
   currentQuestionId: string;
   onQuestionChange: (question: any) => void;
-  onTestComplete: (shouldReattempt: boolean) => void;
+  onTestComplete: (shouldReattempt: boolean, previousCode?: string) => void;
+  initialStoredCode?: string | null;
 };
 
 const languages: { value: Language; label: string }[] = [
@@ -33,14 +36,27 @@ const defaultCode: Record<Language, string> = {
   cpp: '// Write your C++ code here',
 };
 
-export default function CodeEditor({ currentQuestionId, onQuestionChange, onTestComplete }: Props) {
+export default function CodeEditor({ 
+  currentQuestionId, 
+  onQuestionChange, 
+  onTestComplete,
+  initialStoredCode
+}: Props) {
+  const router = useRouter();
   const { theme } = useTheme();
   const { showToast } = useToast();
+  const { markTestAsCompleted, testStatus } = useAuth();
   const [language, setLanguage] = useState<Language>('python');
-  const [code, setCode] = useState(defaultCode[language]);
+  const [code, setCode] = useState(initialStoredCode || defaultCode[language]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showCompletionDialog, setShowCompletionDialog] = useState(false);
   const [showErrorDialog, setShowErrorDialog] = useState(false);
+  const [showReattemptDialog, setShowReattemptDialog] = useState(false);
+  const [submissionResponse, setSubmissionResponse] = useState<any>(null);
+
+  useEffect(() => {
+    // Reset code to initial stored code or default when initialStoredCode changes
+    setCode(initialStoredCode || defaultCode[language]);
+  }, [initialStoredCode, language]);
 
   const handleLanguageChange = (value: Language) => {
     setLanguage(value);
@@ -81,17 +97,38 @@ export default function CodeEditor({ currentQuestionId, onQuestionChange, onTest
       showToast("Code submitted successfully", "default");
 
       if (data.isComplete) {
-        setShowCompletionDialog(true);
+        // Check if user can reattempt
+        if (testStatus.attemptsRemaining > 0) {
+          // Show reattempt dialog
+          setSubmissionResponse(data);
+          setShowReattemptDialog(true);
+        } else {
+          // Mark test as completed and redirect
+          markTestAsCompleted();
+          router.push('/test-complete');
+        }
       } else if (data.nextQuestion) {
         setCode(defaultCode[language]); // Reset editor for next question
         onQuestionChange(data.nextQuestion);
       }
     } catch (error) {
       showToast("Failed to submit code. Please try again.", "destructive");
-      setShowErrorDialog(true);  // Show error dialog in case of submission failure
+      setShowErrorDialog(true);
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleReattempt = () => {
+    // Close dialog and trigger reattempt with current code
+    setShowReattemptDialog(false);
+    onTestComplete(true, code);
+  };
+
+  const handleFinishTest = () => {
+    // Mark test as completed and redirect
+    markTestAsCompleted();
+    router.push('/test-complete');
   };
 
   return (
@@ -131,20 +168,6 @@ export default function CodeEditor({ currentQuestionId, onQuestionChange, onTest
         </Button>
       </div>
 
-      <AlertDialog open={showCompletionDialog} onOpenChange={(open) => setShowCompletionDialog(open)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Submission Complete</AlertDialogTitle>
-          </AlertDialogHeader>
-          <AlertDialogDescription>
-            You've completed all questions in this challenge. Congratulations!
-          </AlertDialogDescription>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setShowCompletionDialog(false)}>Close</AlertDialogCancel>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
       <AlertDialog open={showErrorDialog} onOpenChange={(open) => setShowErrorDialog(open)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -155,6 +178,29 @@ export default function CodeEditor({ currentQuestionId, onQuestionChange, onTest
           </AlertDialogDescription>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setShowErrorDialog(false)}>Close</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showReattemptDialog} onOpenChange={setShowReattemptDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Test Progress</AlertDialogTitle>
+            <AlertDialogDescription>
+              {testStatus.attemptsRemaining > 0 
+                ? "You have an opportunity to reattempt this test. Would you like to continue with your current attempt or start a new one?" 
+                : "You have completed your test attempts."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            {testStatus.attemptsRemaining > 0 && (
+              <AlertDialogAction onClick={handleReattempt}>
+                Reattempt Test
+              </AlertDialogAction>
+            )}
+            <AlertDialogCancel onClick={handleFinishTest}>
+              Finish Test
+                </AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

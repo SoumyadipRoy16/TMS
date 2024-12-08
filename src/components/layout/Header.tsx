@@ -1,3 +1,5 @@
+// src/components/layout/Header.tsx
+
 'use client'
 
 import { useState } from 'react'
@@ -8,7 +10,7 @@ import { useAuth } from '@/contexts/AuthContext'
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const { user, logout } = useAuth()
+  const { user, testCompleted, logout } = useAuth()
 
   return (
     <header className="bg-background border-b">
@@ -56,7 +58,10 @@ export default function Header() {
               <Link href="/dashboard" className="text-foreground hover:text-primary">
                 Dashboard
               </Link>
-              <Link href="/test" className="text-foreground hover:text-primary">
+              <Link 
+                href="/test" 
+                className={`text-foreground ${testCompleted ? 'text-gray-400 cursor-not-allowed pointer-events-none' : 'hover:text-primary'}`}
+              >
                 Take Test
               </Link>
               <Link
@@ -121,7 +126,10 @@ export default function Header() {
               <Link href="/dashboard" className="block py-2 px-4 text-sm hover:bg-accent">
                 Dashboard
               </Link>
-              <Link href="/test" className="block py-2 px-4 text-sm hover:bg-accent">
+              <Link 
+                href="/test" 
+                className={`block py-2 px-4 text-sm ${testCompleted ? 'text-gray-400 cursor-not-allowed pointer-events-none' : 'hover:bg-accent'}`}
+              >
                 Take Test
               </Link>
               <Link

@@ -37,9 +37,14 @@ function TestContent() {
   const { showToast } = useToast()
   const [showFullScreenDialog, setShowFullScreenDialog] = useState(false)
   
+  const { user, testStatus, initiateReattempt } = useAuth()
+
   // New state for tab switching
   const [tabSwitchCount, setTabSwitchCount] = useState(0)
   const [isTabSwitchWarningOpen, setIsTabSwitchWarningOpen] = useState(false)
+
+  // Stored code for reattempt
+  const [storedCode, setStoredCode] = useState<string | null>(null)
 
   useEffect(() => {
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
@@ -191,16 +196,43 @@ function TestContent() {
     setQuestion(newQuestion)
   }
 
-  const handleTestComplete = (shouldReattempt: boolean) => {
-    if (shouldReattempt) {
-      fetchQuestion()
-      showToast("Starting your final attempt", "default")
-    } else {
-      setIsComplete(true)
-      setTimeout(() => {
-        router.push('/dashboard')
-      }, 5000)
+  const handleTestComplete = async (shouldReattempt: boolean, previousCode?: string, isTimeExpired: boolean = false) => {
+    try {
+      // Send test completion data to backend
+      await fetch('/api/test/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          isTimeExpired,
+          status: isTimeExpired ? 'time_expired' : 'completed'
+        })
+      })
+
+      if (shouldReattempt && testStatus.attemptsRemaining > 0) {
+        // Store the previous code for reattempt
+        setStoredCode(previousCode || null)
+        
+        // Mark the test as reattempted
+        initiateReattempt()
+        
+        // Reset and fetch first question
+        fetchQuestion()
+        setIsTestStarted(false)
+        showToast("Starting your final attempt", "default")
+      } else {
+        // Redirect to test complete page
+        router.push('/test-complete')
+      }
+    } catch (error) {
+      showToast("Failed to submit test", "destructive")
     }
+  }
+
+  const handleTimeExpired = (questionIndex: number) => {
+    // Implement time expiration logic
+    handleTestFailure()
   }
 
   if (isComplete) {
@@ -216,8 +248,6 @@ function TestContent() {
     )
   }
 
-  const { user } = useAuth()
-
   if (!user) {
     return <div className="text-center text-foreground">Please log in to take the test.</div>
   }
@@ -228,6 +258,13 @@ function TestContent() {
       <div className="container mx-auto px-4 py-8 max-w-2xl">
         <div className="bg-card p-8 rounded-lg shadow-lg">
           <h1 className="text-3xl font-bold mb-6 text-center">Test Guidelines</h1>
+          
+          {testStatus.reattempted && (
+            <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4" role="alert">
+              <p className="font-bold">Final Attempt</p>
+              <p>This is your last chance to take the test.</p>
+            </div>
+          )}
           
           <div className="space-y-4 mb-6">
             <div className="flex items-start space-x-3">
@@ -257,42 +294,50 @@ function TestContent() {
             </div>
           </div>
           
-          <div className="space-y-4">
-            <Button 
-              onClick={handleFullScreen} 
-              className="w-full"
-              variant="outline"
-            >
-              Enter Full Screen Mode
-            </Button>
-          </div>
-
-          <AlertDialog open={showFullScreenDialog} onOpenChange={setShowFullScreenDialog}>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Full Screen Enabled</AlertDialogTitle>
-                <AlertDialogDescription>
-                  You are now in full-screen mode. Next, we'll request camera access.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogAction onClick={handleCameraPermission}>
-                  Allow Camera Access
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-
-          {isCameraAllowed && (
-            <div className="mt-4">
-              <Button 
-                onClick={startTest} 
-                className="w-full"
-                disabled={!isCameraAllowed}
-              >
-                Start Test
-              </Button>
+          {testStatus.completed ? (
+            <div className="text-center text-red-500">
+              You have already completed the test.
             </div>
+          ) : (
+            <>
+              <div className="space-y-4">
+                <Button 
+                  onClick={handleFullScreen} 
+                  className="w-full"
+                  variant="outline"
+                >
+                  Enter Full Screen Mode
+                </Button>
+              </div>
+
+              <AlertDialog open={showFullScreenDialog} onOpenChange={setShowFullScreenDialog}>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Full Screen Enabled</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      You are now in full-screen mode. Next, we'll request camera access.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogAction onClick={handleCameraPermission}>
+                      Allow Camera Access
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+
+              {isCameraAllowed && (
+                <div className="mt-4">
+                  <Button 
+                    onClick={startTest} 
+                    className="w-full"
+                    disabled={!isCameraAllowed}
+                  >
+                    Start Test
+                  </Button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -304,9 +349,13 @@ function TestContent() {
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-foreground">Coding Test</h1>
-          <Timer onTimeExpired={function (questionIndex: number): void {
-            throw new Error('Function not implemented.')
-          } } totalQuestions={3} />
+          <Timer 
+            onTimeExpired={() => {
+              // When entire test time expires, complete the test
+              handleTestComplete(false, undefined, true)
+            }}  
+            totalQuestions={3} 
+          />
         </div>
         
         <div className="grid lg:grid-cols-2 gap-6">
