@@ -24,6 +24,12 @@ module.exports = {
         port: '',
         pathname: '/v2/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'www.cntanglewood.com',
+        port: '',
+        pathname: '/wp-content/uploads/**',
+      }
     ],    
   },
 }

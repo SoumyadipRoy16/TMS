@@ -6,12 +6,19 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from '@/contexts/AuthContext'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
+import { Analytics } from "@vercel/analytics/react"
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
-  title: 'Test Management System',
-  description: 'Internship application and test management platform',
+  title: 'CodeCraft | Internship Test Management Platform',
+  description: 'Elevate your coding skills, ace internship challenges, and transform your career with our intelligent test management system.',
+  keywords: ['internship', 'coding tests', 'tech recruitment', 'performance analytics', 'skill assessment'],
+  openGraph: {
+    title: 'CodeCraft: Your Gateway to Tech Internships',
+    description: 'Transform your coding journey with data-driven skill assessment and challenge management.',
+    images: [{ url: '/og-image.png' }]
+  }
 }
 
 export default function RootLayout({
@@ -27,6 +34,7 @@ export default function RootLayout({
             <Header />
             <main className="container mx-auto px-4 py-8 flex-grow">{children}</main>
             <Footer />
+            <Analytics />
           </ThemeProvider>
         </AuthProvider>
       </body>

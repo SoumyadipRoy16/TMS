@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { useRouter } from 'next/navigation'
 import { Toast } from "@/components/ui/toast"
+import { BackgroundBeamsWithCollision } from "@/components/ui/background-beams-with-collision"
 import { UserFormData, AdminFormData, OTPVerificationResponse } from '@/types/registration'
 
 export default function Register() {
@@ -121,50 +122,53 @@ export default function Register() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {toast.visible && (
-        <Toast 
-          message={toast.message} 
-          variant={toast.variant} 
-          state={toast.visible ? "visible" : "hidden"}
-          className="absolute top-4 left-1/2 -translate-x-1/2"
-        />
-      )}
-      
-      <h1 className="text-3xl font-bold mb-6 text-center">Register</h1>
-      <div className="max-w-md mx-auto">
-        <div className="flex justify-center space-x-4 mb-6">
-          <Button
-            onClick={() => setIsUser(true)}
-            variant={isUser ? "default" : "outline"}
-          >
-            Register as User
-          </Button>
-          <Button
-            onClick={() => setIsUser(false)}
-            variant={!isUser ? "default" : "outline"}
-          >
-            Register as Admin
-          </Button>
-        </div>
-        <Card className="w-full">
-          <CardContent className="p-6">
-            <motion.div
-              initial={false}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.3 }}
-              key={isUser ? 'user' : 'admin'}
+    <div className="min-h-screen bg-background overflow-hidden relative">
+      <BackgroundBeamsWithCollision className="absolute inset-0 z-0" children={undefined} />
+      <div className="container mx-auto px-4 py-8 relative z-10">
+        {toast.visible && (
+          <Toast 
+            message={toast.message} 
+            variant={toast.variant} 
+            state={toast.visible ? "visible" : "hidden"}
+            className="absolute top-4 left-1/2 -translate-x-1/2"
+          />
+        )}
+        
+        <h1 className="text-3xl font-bold mb-6 text-center">Register</h1>
+        <div className="max-w-md mx-auto">
+          <div className="flex justify-center space-x-4 mb-6">
+            <Button
+              onClick={() => setIsUser(true)}
+              variant={isUser ? "default" : "outline"}
             >
-              {isUser ? (
-                <UserRegistrationForm 
-                  onSubmit={!otpSent ? handleInitialRegistration : handleOTPVerification} 
-                />
-              ) : (
-                <AdminRegistrationForm onSubmit={handleInitialRegistration} />
-              )}
-            </motion.div>
-          </CardContent>
-        </Card>
+              Register as User
+            </Button>
+            <Button
+              onClick={() => setIsUser(false)}
+              variant={!isUser ? "default" : "outline"}
+            >
+              Register as Admin
+            </Button>
+          </div>
+          <Card className="w-full">
+            <CardContent className="p-6">
+              <motion.div
+                initial={false}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3 }}
+                key={isUser ? 'user' : 'admin'}
+              >
+                {isUser ? (
+                  <UserRegistrationForm 
+                    onSubmit={!otpSent ? handleInitialRegistration : handleOTPVerification} 
+                  />
+                ) : (
+                  <AdminRegistrationForm onSubmit={handleInitialRegistration} />
+                )}
+              </motion.div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   )
