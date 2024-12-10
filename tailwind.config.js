@@ -28,6 +28,7 @@ module.exports = {
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
+          dark: "hsl(217.2, 32.6%, 12%)",
         },
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
@@ -73,3 +74,4 @@ module.exports = {
   },
   plugins: [require("tailwindcss-animate")],
 }
+

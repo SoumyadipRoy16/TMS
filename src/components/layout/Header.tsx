@@ -1,5 +1,3 @@
-// src/components/layout/Header.tsx
-
 'use client'
 
 import { useState } from 'react'
@@ -10,7 +8,7 @@ import { useAuth } from '@/contexts/AuthContext'
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const { user, testCompleted, logout } = useAuth()
+  const { user, testStatus, logout } = useAuth()
 
   return (
     <header className="bg-background border-b">
@@ -46,8 +44,8 @@ export default function Header() {
                 href="/"
                 className="text-foreground hover:text-primary"
                 onClick={(e) => {
-                  e.preventDefault();
-                  logout();
+                  e.preventDefault()
+                  logout()
                 }}
               >
                 Logout
@@ -58,9 +56,9 @@ export default function Header() {
               <Link href="/dashboard" className="text-foreground hover:text-primary">
                 Dashboard
               </Link>
-              <Link 
-                href="/test" 
-                className={`text-foreground ${testCompleted ? 'text-gray-400 cursor-not-allowed pointer-events-none' : 'hover:text-primary'}`}
+              <Link
+                href="/test"
+                className={`text-foreground ${testStatus.completed ? 'text-gray-400 cursor-not-allowed pointer-events-none' : 'hover:text-primary'}`}
               >
                 Take Test
               </Link>
@@ -68,8 +66,8 @@ export default function Header() {
                 href="/"
                 className="text-foreground hover:text-primary"
                 onClick={(e) => {
-                  e.preventDefault();
-                  logout();
+                  e.preventDefault()
+                  logout()
                 }}
               >
                 Logout
@@ -114,8 +112,8 @@ export default function Header() {
                 href="/"
                 className="block w-full text-left py-2 px-4 text-sm hover:bg-accent"
                 onClick={(e) => {
-                  e.preventDefault();
-                  logout();
+                  e.preventDefault()
+                  logout()
                 }}
               >
                 Logout
@@ -126,9 +124,9 @@ export default function Header() {
               <Link href="/dashboard" className="block py-2 px-4 text-sm hover:bg-accent">
                 Dashboard
               </Link>
-              <Link 
-                href="/test" 
-                className={`block py-2 px-4 text-sm ${testCompleted ? 'text-gray-400 cursor-not-allowed pointer-events-none' : 'hover:bg-accent'}`}
+              <Link
+                href="/test"
+                className={`block py-2 px-4 text-sm ${testStatus.completed ? 'text-gray-400 cursor-not-allowed pointer-events-none' : 'hover:bg-accent'}`}
               >
                 Take Test
               </Link>
@@ -136,8 +134,8 @@ export default function Header() {
                 href="/"
                 className="block w-full text-left py-2 px-4 text-sm hover:bg-accent"
                 onClick={(e) => {
-                  e.preventDefault();
-                  logout();
+                  e.preventDefault()
+                  logout()
                 }}
               >
                 Logout
