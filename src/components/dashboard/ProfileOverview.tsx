@@ -1,3 +1,5 @@
+// src/components/dashboard/ProfileOverview.tsx
+
 'use client'
 
 import { User } from 'lucide-react'

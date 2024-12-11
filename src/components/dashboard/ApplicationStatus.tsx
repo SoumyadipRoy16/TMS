@@ -1,3 +1,5 @@
+// src/components/dashboard/ApplicationStatus.tsx
+
 'use client'
 
 import { useEffect, useState } from 'react'

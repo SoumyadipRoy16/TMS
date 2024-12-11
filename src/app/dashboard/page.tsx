@@ -6,7 +6,6 @@ import { useAuth } from '@/contexts/AuthContext'
 import ProfileOverview from '@/components/dashboard/ProfileOverview'
 import TestPerformance from '@/components/dashboard/TestPerformance'
 import ApplicationStatus from '@/components/dashboard/ApplicationStatus'
-import RecommendationCard from '@/components/dashboard/RecommendationCard'
 
 export default function Dashboard() {
   const { user } = useAuth()
@@ -22,7 +21,6 @@ export default function Dashboard() {
         <ProfileOverview />
         <TestPerformance />
         <ApplicationStatus />
-        <RecommendationCard />
       </div>
     </div>
   )
