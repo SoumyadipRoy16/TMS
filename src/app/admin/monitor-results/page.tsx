@@ -8,6 +8,7 @@ import EyeIcon from '@/components/ui/eye-icon';
 type Submission = {
   _id: string;
   username: string;
+  userId: string;
   questionId: string;
   code: string;
   timestamp: Date;
@@ -79,7 +80,7 @@ export default function MonitorResults() {
     }));
   };
 
-  const handleSubmit = async (submissionId: string, username: string, questionId: string) => {
+  const handleSubmit = async (submissionId: string, username: string, userId: string, questionId: string) => {
     const score = scores[submissionId];
 
     if (score === undefined) {
@@ -95,6 +96,7 @@ export default function MonitorResults() {
         },
         body: JSON.stringify({
           username,
+          userId,
           score,
           questionId,
         }),
@@ -128,6 +130,7 @@ export default function MonitorResults() {
         <TableHeader>
           <TableRow>
             <TableHead className="text-center">User</TableHead>
+            <TableHead className="text-center">Student Id</TableHead>
             <TableHead className="text-center">Question Id</TableHead>
             <TableHead className="text-center">Code</TableHead>
             <TableHead className="text-center">Score</TableHead>
@@ -143,6 +146,7 @@ export default function MonitorResults() {
             return (
               <TableRow key={submission._id}>
                 <TableCell>{submission.username}</TableCell>
+                <TableCell>{submission.userId}</TableCell>
                 <TableCell>{submission.questionId}</TableCell>
                 <TableCell className="text-center">
                   <EyeIcon code={submission.code} />
@@ -165,7 +169,7 @@ export default function MonitorResults() {
                   <div className="flex gap-2">
                     <button
                       onClick={() =>
-                        handleSubmit(submission._id, submission.username, submission.questionId)
+                        handleSubmit(submission._id, submission.username, submission.userId, submission.questionId)
                       }
                       disabled={!isEditing}
                       className={`px-4 py-2 rounded transition-colors flex-1 ${

@@ -4,6 +4,7 @@ import connectDB from '@/lib/mongodb'
 type Result = {
   _id?: string
   username: string
+  userId: string
   score: number
   questionId: string
   timestamp?: Date  // Changed to Date type
@@ -11,7 +12,7 @@ type Result = {
 
 export async function POST(request: Request) {
   try {
-    const { username, score, questionId }: Result = await request.json()
+    const { username, userId, score, questionId }: Result = await request.json()
 
     // Validate input
     if (!username || score === undefined || !questionId) {
@@ -28,6 +29,7 @@ export async function POST(request: Request) {
     const currentTimestamp = new Date()
     const resultToInsert = {
       username,
+      userId,
       score,
       questionId,
       timestamp: currentTimestamp,
@@ -47,6 +49,7 @@ export async function POST(request: Request) {
     const formattedResult: Result = {
       _id: insertedResult._id.toString(),
       username: insertedResult.username,
+      userId: insertedResult.userId,
       score: insertedResult.score,
       questionId: insertedResult.questionId,
       timestamp: insertedResult.timestamp, // Keep as Date object
@@ -82,6 +85,7 @@ export async function GET(request: Request) {
     const transformedResults: Result[] = results.map((result) => ({
       _id: result._id.toString(),
       username: result.username,
+      userId: result.userId,
       score: result.score,
       questionId: result.questionId,
       timestamp: new Date(result.timestamp), // Ensure timestamp is a Date object

@@ -5,6 +5,7 @@ import connectDB from '@/lib/mongodb'
 type Submission = {
   _id: string
   username: string
+  userId: string
   questionId: string
   code: string
   timestamp: Date  // Changed to Date type
@@ -26,6 +27,7 @@ export async function GET(request: Request) {
     const transformedSubmissions: Submission[] = submissions.map((submission) => ({
       _id: submission._id.toString(),
       username: submission.username,
+      userId: submission.userId,
       questionId: submission.questionId,
       code: submission.code,
       timestamp: new Date(submission.timestamp), // Keep as Date object instead of converting to string
