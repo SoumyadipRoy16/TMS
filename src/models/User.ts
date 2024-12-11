@@ -1,3 +1,5 @@
+// src/models/User.ts
+
 import mongoose from 'mongoose'
 
 const UserSchema = new mongoose.Schema({
@@ -8,10 +10,17 @@ const UserSchema = new mongoose.Schema({
   role: { type: String, enum: ['user', 'admin'], default: 'user' },
   education: { type: String },
   skills: { type: String },
-  resume: {
-    filename: { type: String },
-    path: { type: String },
-    mimetype: { type: String }
+  resumeLink: { 
+    type: String, 
+    required: true,  // Make resume link mandatory
+    validate: {
+      validator: function(v: string) {
+        // Basic URL validation
+        const urlRegex = /^(https?:\/\/)?(drive\.google\.com|www\.dropbox\.com|docs\.google\.com)\/.*$/i;
+        return urlRegex.test(v);
+      },
+      message: 'Please provide a valid Google Drive or Dropbox link'
+    }
   }
 }, { timestamps: true })
 

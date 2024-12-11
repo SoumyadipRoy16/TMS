@@ -1,3 +1,5 @@
+// src/types/registration.ts
+
 export interface UserFormData {
   firstName?: string
   lastName?: string
@@ -5,7 +7,7 @@ export interface UserFormData {
   password: string
   education?: string
   skills?: string
-  resume?: File | null
+  resumeLink?: string
   otp?: string
   role?: 'user' | 'admin'
 }

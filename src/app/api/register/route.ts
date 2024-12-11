@@ -4,8 +4,6 @@ import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 import { sendOTPEmail, sendWelcomeEmail } from '@/lib/email';
 import { verifyOTP } from '@/lib/redis';
-import { writeFile } from 'fs/promises';
-import path from 'path';
 
 const ADMIN_CODE = process.env.ADMIN_CODE || 'default_admin_code';
 
@@ -28,28 +26,11 @@ export async function POST(request: Request) {
     adminCode, 
     otp,
     education,
-    skills 
+    skills,
+    resumeLink 
   } = data;
 
   try {
-    // Resume handling for user registration
-    let resumePath = null;
-    if (role === 'user' && formData.get('resume')) {
-      const resume = formData.get('resume') as File;
-      
-      // Generate unique filename
-      const filename = `${Date.now()}_${resume.name}`;
-      const uploadDir = path.join(process.cwd(), 'public', 'resumes');
-      
-      // Ensure directory exists
-      await writeFile(
-        path.join(uploadDir, filename), 
-        Buffer.from(await resume.arrayBuffer())
-      );
-
-      resumePath = `/resumes/${filename}`;
-    }
-
     // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -59,7 +40,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Admin Registration (simplified for brevity)
+    // Admin Registration
     if (role === 'admin') {
       if (!adminCode || adminCode !== ADMIN_CODE) {
         return NextResponse.json(
@@ -92,6 +73,14 @@ export async function POST(request: Request) {
 
     // User Registration with OTP
     if (role === 'user') {
+      // Validate resume link for user registration
+      if (role === 'user' && (!resumeLink || typeof resumeLink !== 'string')) {
+        return NextResponse.json(
+          { success: false, message: 'Valid resume link is required' },
+          { status: 400 }
+        );
+      }
+
       // OTP sending logic
       if (!otp) {
         const otpSent = await sendOTPEmail(email);
@@ -109,7 +98,7 @@ export async function POST(request: Request) {
                 role,
                 education,
                 skills,
-                resumePath,
+                resumeLink,
               },
             },
             { status: 200 }
@@ -134,7 +123,7 @@ export async function POST(request: Request) {
       // Hash the password
       const hashedPassword = await bcrypt.hash(password, 10);
 
-      // Create new user with resume
+      // Create new user
       const newUser = new User({
         firstName,
         lastName,
@@ -143,11 +132,7 @@ export async function POST(request: Request) {
         role,
         education,
         skills,
-        resume: resumePath ? {
-          filename: resumePath.split('/').pop(),
-          path: resumePath,
-          mimetype: 'application/pdf'
-        } : undefined,
+        resumeLink,
       });
 
       await newUser.save();

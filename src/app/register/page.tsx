@@ -36,24 +36,19 @@ export default function Register() {
 
   const handleInitialRegistration = async (formData: UserFormData) => {
     try {
-      // Create FormData for file upload
+      // Create FormData for submission
       const form = new FormData();
       
       // Append all text fields
       Object.keys(formData).forEach(key => {
         const value = formData[key as keyof UserFormData];
-        if (key !== 'resume' && value) {
+        if (value) {
           form.append(key, String(value));
         }
       });
 
       // Append role
       form.append('role', isUser ? 'user' : 'admin');
-
-      // Append resume if it exists
-      if (formData.resume) {
-        form.append('resume', formData.resume);
-      }
 
       const response = await fetch('/api/register', {
         method: 'POST',

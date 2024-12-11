@@ -21,51 +21,25 @@ export function UserRegistrationForm({ onSubmit }: RegistrationFormProps<UserFor
   
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [otpSent, setOtpSent] = useState(false)
-  const [resumeFile, setResumeFile] = useState<File | null>(null)
-
-  const handleResumeChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      // Validate PDF
-      if (file.type !== 'application/pdf') {
-        alert('Only PDF files are allowed')
-        e.target.value = '' // Clear the input
-        return
-      }
-      
-      // Validate file size (optional, e.g., max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        alert('File size should be less than 5MB')
-        e.target.value = '' // Clear the input
-        return
-      }
-
-      setResumeFile(file)
-      setValue('resume', file)
-    }
-  }
 
   const submitHandler = async (data: UserFormData) => {
     if (onSubmit) {
       setIsSubmitting(true)
       try {
         if (!otpSent) {
-          // Ensure resume is uploaded for user registration
-          if (!resumeFile) {
-            alert('Please upload your resume')
+          // Ensure resume link is provided
+          if (!data.resumeLink) {
+            alert('Please provide a resume link from Google Drive or Dropbox')
             setIsSubmitting(false)
             return
           }
         }
 
-        await onSubmit({
-          ...data,
-          resume: resumeFile
-        })
-        // If OTP is sent, we'll let the parent component handle the state
+        await onSubmit(data)
+        
         if (!otpSent) {
           setOtpSent(true)
-        }else{
+        } else {
           router.push('/login')
         }
       } catch (error) {
@@ -157,22 +131,24 @@ export function UserRegistrationForm({ onSubmit }: RegistrationFormProps<UserFor
         )}
       </div>
       <div className="space-y-2">
-        <Label htmlFor="resume">Upload Resume (PDF only)</Label>
+        <Label htmlFor="resumeLink">Resume Link</Label>
         <Input
-          id="resume"
-          type="file"
-          accept=".pdf"
-          onChange={handleResumeChange}
-          required
+          id="resumeLink"
+          placeholder="Paste Google Drive or Dropbox link"
+          {...register('resumeLink', { 
+            required: 'Resume link is required',
+            pattern: {
+              value: /^(https?:\/\/)?(drive\.google\.com|www\.dropbox\.com|docs\.google\.com)\/.*$/i,
+              message: 'Please provide a valid Google Drive or Dropbox link'
+            }
+          })}
         />
-        {resumeFile && (
-          <p className="text-sm text-muted-foreground">
-            Selected file: {resumeFile.name}
-          </p>
+        {errors.resumeLink && (
+          <p className="text-sm text-destructive">{errors.resumeLink.message}</p>
         )}
-        {!resumeFile && (
-          <p className="text-sm text-destructive">Resume is required</p>
-        )}
+        <p className="text-sm text-muted-foreground">
+          Accepted: Google Drive or Dropbox share links
+        </p>
       </div>
     </>
   )
