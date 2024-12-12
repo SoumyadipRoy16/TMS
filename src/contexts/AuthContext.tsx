@@ -1,3 +1,5 @@
+// src/contexts/AuthContext.tsx
+
 "use client"
 
 import React, { createContext, useContext, useState, useEffect } from 'react'
@@ -5,6 +7,7 @@ import { useRouter } from 'next/navigation'
 
 type User = {
   name: string
+  email: string
   role: 'user' | 'admin'
 } | null
 
@@ -22,6 +25,7 @@ type AuthContextType = {
   markTestAsCompleted: () => void
   resetTestCompletion: () => void
   initiateReattempt: () => void
+  fetchWithAuth: (url: string, options?: RequestInit) => Promise<Response>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -48,6 +52,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setTestStatus(JSON.parse(savedTestStatus))
     }
   }, [])
+
+  const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
+    // Ensure user is logged in before making the request
+    if (!user) {
+      throw new Error('User not authenticated')
+    }
+
+    // Clone the existing headers or create new ones
+    const headers = new Headers(options.headers)
+    
+    // Add the user's email to the headers
+    headers.set('x-user-email', user.email)
+
+    // Merge the new headers with the existing options
+    return fetch(url, {
+      ...options,
+      headers
+    })
+  }
 
   const login = (userData: User) => {
     setUser(userData)
@@ -105,7 +128,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       logout, 
       markTestAsCompleted,
       resetTestCompletion,
-      initiateReattempt
+      initiateReattempt,
+      fetchWithAuth
     }}>
       {children}
     </AuthContext.Provider>

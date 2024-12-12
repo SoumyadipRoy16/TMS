@@ -9,13 +9,15 @@ const UserSchema = new mongoose.Schema({
   password: { type: String, required: true },
   role: { type: String, enum: ['user', 'admin'], default: 'user' },
   education: { type: String },
-  skills: { type: String },
+  skills: { 
+    type: String,  // Comma-separated skills string
+    default: ''
+  },
   resumeLink: { 
     type: String, 
-    required: true,  // Make resume link mandatory
+    required: true,
     validate: {
       validator: function(v: string) {
-        // Basic URL validation
         const urlRegex = /^(https?:\/\/)?(drive\.google\.com|www\.dropbox\.com|docs\.google\.com)\/.*$/i;
         return urlRegex.test(v);
       },

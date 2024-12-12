@@ -44,8 +44,9 @@ export default function Login() {
         console.log('User Role:', responseData.user.role);
 
         login({
-          name: `${responseData.user.firstName} ${responseData.user.lastName}`, 
-          role: responseData.user.role
+          name: `${responseData.user.firstName} ${responseData.user.lastName}`,
+          role: responseData.user.role,
+          email: responseData.user.email
         })
         
         // Specific routing based on user role
