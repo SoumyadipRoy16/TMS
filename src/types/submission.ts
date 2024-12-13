@@ -23,3 +23,19 @@ export interface ITestCase {
     score: number | null;
     timestamp: string;
   }
+
+  export type TestCaseResult = {
+    input: string;
+    expectedOutput: string;
+    actualOutput: string;
+    passed: boolean;
+  };
+  
+  // Define the submission type for the test submission
+  export type SubmissionType = {
+    questionId: string;
+    code: string;
+    language: string;
+    testCaseResults: TestCaseResult[];
+    totalMarks: number;
+  };

@@ -1,5 +1,4 @@
 // src/models/User.ts
-
 import mongoose from 'mongoose'
 
 const UserSchema = new mongoose.Schema({
@@ -22,6 +21,46 @@ const UserSchema = new mongoose.Schema({
         return urlRegex.test(v);
       },
       message: 'Please provide a valid Google Drive or Dropbox link'
+    }
+  },
+  // New test-related fields
+  testAttempts: {
+    type: Number,
+    default: 0,
+    max: 2  // Allow maximum 2 attempts
+  },
+  testCompleted: {
+    type: Boolean,
+    default: false
+  },
+  lastTestDate: {
+    type: Date,
+    default: null
+  },
+  testDisqualified: {
+    type: Boolean,
+    default: false
+  },
+  disqualificationReason: {
+    type: String,
+    enum: [
+      null, 
+      'Multiple Tab Switches', 
+      'Suspected Cheating', 
+      'Violation of Test Guidelines'
+    ],
+    default: null
+  },
+  testPerformance: {
+    type: {
+      totalTests: Number,
+      passedTests: Number,
+      averageMarks: Number
+    },
+    default: {
+      totalTests: 0,
+      passedTests: 0,
+      averageMarks: 0
     }
   }
 }, { timestamps: true })
