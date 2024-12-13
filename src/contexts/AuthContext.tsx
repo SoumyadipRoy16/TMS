@@ -14,6 +14,8 @@ type User = {
 type TestStatus = {
   completed: boolean
   reattempted: boolean
+  disqualified: boolean
+  timeExpired: boolean
   attemptsRemaining: number
 }
 
@@ -23,10 +25,13 @@ type AuthContextType = {
   login: (user: User) => void
   logout: () => void
   markTestAsCompleted: () => void
+  markTestAsDisqualified: () => void
+  markTestAsTimeExpired: () => void
   resetTestCompletion: () => void
   initiateReattempt: () => void
   fetchWithAuth: (url: string, options?: RequestInit) => Promise<Response>
 }
+
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
@@ -35,6 +40,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [testStatus, setTestStatus] = useState<TestStatus>({
     completed: false,
     reattempted: false,
+    disqualified: false,
+    timeExpired: false,
     attemptsRemaining: 1
   })
   const router = useRouter()
@@ -49,7 +56,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     
     if (savedTestStatus) {
-      setTestStatus(JSON.parse(savedTestStatus))
+      const parsedTestStatus = JSON.parse(savedTestStatus)
+      // Ensure all new properties are present
+      setTestStatus({
+        completed: parsedTestStatus.completed || false,
+        reattempted: parsedTestStatus.reattempted || false,
+        disqualified: parsedTestStatus.disqualified || false,
+        timeExpired: parsedTestStatus.timeExpired || false,
+        attemptsRemaining: parsedTestStatus.attemptsRemaining || 1
+      })
     }
   }, [])
 
@@ -82,6 +97,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setTestStatus({
       completed: false,
       reattempted: false,
+      disqualified: false,
+      timeExpired: false,
       attemptsRemaining: 1
     })
     localStorage.removeItem('user')
@@ -98,10 +115,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('testStatus', JSON.stringify(newTestStatus))
   }
 
+  const markTestAsDisqualified = () => {
+    const newTestStatus = {
+      ...testStatus,
+      disqualified: true
+    }
+    setTestStatus(newTestStatus)
+    localStorage.setItem('testStatus', JSON.stringify(newTestStatus))
+  }
+
+  const markTestAsTimeExpired = () => {
+    const newTestStatus = {
+      ...testStatus,
+      timeExpired: true
+    }
+    setTestStatus(newTestStatus)
+    localStorage.setItem('testStatus', JSON.stringify(newTestStatus))
+  }
+
   const resetTestCompletion = () => {
     const newTestStatus = {
       completed: false,
       reattempted: false,
+      disqualified: false,
+      timeExpired: false,
       attemptsRemaining: 1
     }
     setTestStatus(newTestStatus)
@@ -127,6 +164,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       login, 
       logout, 
       markTestAsCompleted,
+      markTestAsDisqualified,
+      markTestAsTimeExpired,
       resetTestCompletion,
       initiateReattempt,
       fetchWithAuth

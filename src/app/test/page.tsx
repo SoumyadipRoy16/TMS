@@ -1,3 +1,5 @@
+// src/app/test/page.tsx
+
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
@@ -37,7 +39,7 @@ function TestContent() {
   const { showToast } = useToast()
   const [showFullScreenDialog, setShowFullScreenDialog] = useState(false)
   
-  const { user, testStatus, initiateReattempt } = useAuth()
+  const { user, testStatus, initiateReattempt, markTestAsCompleted } = useAuth()
 
   // New state for tab switching
   const [tabSwitchCount, setTabSwitchCount] = useState(0)
@@ -230,6 +232,56 @@ function TestContent() {
     }
   }
 
+  const handleQuestionTimeExpired = async (questionIndex: number) => {
+    try {
+      // Submit the current question when time expires
+      const response = await fetch('/api/coding-problem', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          questionId: question?.id,
+          code: '', // No code submitted
+          language: 'python', // Default language
+          timeExpired: true
+        }),
+      })
+  
+      const data = await response.json()
+  
+      if (data.nextQuestion) {
+        // Move to next question
+        setQuestion(data.nextQuestion)
+      }
+    } catch (error) {
+      showToast("Failed to process question expiration", "destructive")
+    }
+  }
+
+  const handleTestFullyExpired = async () => {
+    try {
+      await fetch('/api/test/end', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          reason: 'Total test time expired',
+          status: 'time_expired'
+        })
+      })
+      
+      // Mark test as completed
+      markTestAsCompleted()
+      
+      // Redirect to test complete page
+      router.push('/test-complete')
+    } catch (error) {
+      showToast("Failed to end test", "destructive")
+    }
+  }
+
   const handleTimeExpired = (questionIndex: number) => {
     // Implement time expiration logic
     handleTestFailure()
@@ -350,10 +402,13 @@ function TestContent() {
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-foreground">Coding Test</h1>
           <Timer 
-            onTimeExpired={() => {
-              // When entire test time expires, complete the test
-              handleTestComplete(false, undefined, true)
-            }}  
+            onTimeExpired={handleQuestionTimeExpired}
+            onMoveToNextQuestion={(questionIndex) => {
+              // This can be a direct call to handleQuestionTimeExpired 
+              // or a simplified version of moving to the next question
+              fetchQuestion(question?.id)
+            }}
+            onTestFullyExpired={handleTestFullyExpired}
             totalQuestions={3} 
           />
         </div>

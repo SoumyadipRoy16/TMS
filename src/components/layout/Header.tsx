@@ -10,6 +10,13 @@ export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const { user, testStatus, logout } = useAuth()
 
+  // Function to determine if Take Test link should be disabled
+  const isTestLinkDisabled = () => {
+    return testStatus.completed || 
+           testStatus.disqualified || 
+           testStatus.timeExpired
+  }
+
   return (
     <header className="bg-background border-b">
       <nav className="container mx-auto px-4 py-4 flex justify-between items-center">
@@ -40,8 +47,7 @@ export default function Header() {
               <Link href="/admin/monitor-results" className="text-foreground hover:text-primary">
                 Monitor Results
               </Link>
-              <Link
-                href="/"
+              <Link href="/"
                 className="text-foreground hover:text-primary"
                 onClick={(e) => {
                   e.preventDefault()
@@ -58,7 +64,10 @@ export default function Header() {
               </Link>
               <Link
                 href="/test"
-                className={`text-foreground ${testStatus.completed ? 'text-gray-400 cursor-not-allowed pointer-events-none' : 'hover:text-primary'}`}
+                className={`text-foreground ${isTestLinkDisabled() 
+                  ? 'text-gray-400 cursor-not-allowed pointer-events-none' 
+                  : 'hover:text-primary'
+                }`}
               >
                 Take Test
               </Link>
@@ -121,18 +130,21 @@ export default function Header() {
             </>
           ) : (
             <>
-              <Link href="/dashboard" className="block py-2 px-4 text-sm hover:bg-accent">
+              <Link href="/dashboard" className="text-foreground hover:text-primary">
                 Dashboard
               </Link>
               <Link
                 href="/test"
-                className={`block py-2 px-4 text-sm ${testStatus.completed ? 'text-gray-400 cursor-not-allowed pointer-events-none' : 'hover:bg-accent'}`}
+                className={`text-foreground ${isTestLinkDisabled() 
+                  ? 'text-gray-400 cursor-not-allowed pointer-events-none' 
+                  : 'hover:text-primary'
+                }`}
               >
                 Take Test
               </Link>
               <Link
                 href="/"
-                className="block w-full text-left py-2 px-4 text-sm hover:bg-accent"
+                className="text-foreground hover:text-primary"
                 onClick={(e) => {
                   e.preventDefault()
                   logout()
